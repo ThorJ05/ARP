@@ -1,0 +1,16 @@
+﻿services:
+  db:
+    image: postgres:16
+    container_name: holiday-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: holiday
+      POSTGRES_USER: holiday
+      POSTGRES_PASSWORD: holiday_dev_pw
+    ports:
+      - "5432:5432"
+    volumes:
+      - holiday-data:/var/lib/postgresql/data
+
+volumes:
+  holiday-data:
