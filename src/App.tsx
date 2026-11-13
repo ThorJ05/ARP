@@ -1,22 +1,21 @@
-import { APITester } from "./APITester";
+import { useEffect, useState } from "react";
 import "./index.css";
-
-import logo from "./logo.svg";
-import reactLogo from "./react.svg";
+import { api } from "./api/client";
 
 export function App() {
+  const [status, setStatus] = useState("checking...");
+
+  useEffect(() => {
+    api
+      .request<string>({ path: "/health", method: "GET", format: "text" })
+      .then((res) => setStatus(res.data))
+      .catch(() => setStatus("unreachable"));
+  }, []);
+
   return (
     <div className="app">
-      <div className="logo-container">
-        <img src={logo} alt="Bun Logo" className="logo bun-logo" />
-        <img src={reactLogo} alt="React Logo" className="logo react-logo" />
-      </div>
-
-      <h1>Bun + React</h1>
-      <p>
-        Edit <code>src/App.tsx</code> and save to test HMR
-      </p>
-      <APITester />
+      <h1>Business Esbjerg: Absence Planning</h1>
+      <p>API status: {status}</p>
     </div>
   );
 }
