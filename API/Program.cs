@@ -5,6 +5,8 @@ using FluentValidation;
 using Infrastructure;
 using Serilog;
 using Service.Abstractions;
+using BusinessEsbjerg.Holiday.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 FluentValidation.ValidatorOptions.Global.LanguageManager.Culture = new System.Globalization.CultureInfo("en");
@@ -20,6 +22,10 @@ builder.Services.AddOptions<ClientOptions>()
     .Bind(builder.Configuration.GetSection(ClientOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
+
+//db connect
+builder.Services.AddDbContext<AppDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 var clientOptions = builder.Configuration.GetSection(ClientOptions.SectionName).Get<ClientOptions>()
     ?? throw new InvalidOperationException("Missing 'Client' configuration section.");
@@ -49,6 +55,14 @@ builder.Services.AddOpenApiDocument(config =>
 builder.Services.AddInfrastructure();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+    await DbSeeder.SeedAsync(db);
+}
 
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
