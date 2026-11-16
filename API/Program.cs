@@ -56,12 +56,16 @@ builder.Services.AddInfrastructure();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var db =  scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
-    await DbSeeder.SeedAsync(db);
+
+    if (app.Environment.IsDevelopment())
+    {
+        await DbSeeder.SeedAsync(db);
+    }
+    
 }
 
 app.UseSerilogRequestLogging();

@@ -5,7 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
 
-
+/// <summary>
+/// Inserts test data in the development environment. Safe to run multiple times
+/// (each step is skipped if its table already has data).
+/// All test users share the password "Test1234!" (development only).
+/// </summary>
 public static class DbSeeder
 {
     public static async Task SeedAsync(AppDbContext db)
@@ -25,24 +29,24 @@ public static class DbSeeder
             new() { Key = key, Value = value, Description = desc, EffectiveFrom = from ?? start };
 
         db.RuleParameters.AddRange(
-            P(RuleKeys.Weeks1To5DaysPerMonth, "2.08", "Weeks 1-5: holiday days accrued per month"),
+            P(RuleKeys.Weeks1To5DaysPerMonth, "2.08", "Weeks 1-5: holiday days earned per month"),
             P(RuleKeys.Week6Enabled, "true", "6th holiday week enabled"),
-            P(RuleKeys.Week6HoursPerMonth, "3.083", "6th holiday week: hours per month (full-time)"),
-            P(RuleKeys.Week6HoursPerCalendarDay, "0.103", "6th holiday week: hours per calendar day for partial months"),
-            P(RuleKeys.FullTimeWeeklyHours, "37", "Full-time: hours per week"),
+            P(RuleKeys.Week6HoursPerMonth, "3.083", "6th week: hours earned per month (full time)"),
+            P(RuleKeys.Week6HoursPerCalendarDay, "0.103", "6th week: hours earned per calendar day in a partial month"),
+            P(RuleKeys.FullTimeWeeklyHours, "37", "Full time: hours per week"),
             P(RuleKeys.MainHolidayDays, "15", "Main holiday: consecutive working days"),
             P(RuleKeys.MainHolidayWindowStart, "05-01", "Main holiday: window start (MM-dd)"),
             P(RuleKeys.MainHolidayWindowEnd, "09-30", "Main holiday: window end (MM-dd)"),
-            P(RuleKeys.NoticeMainHolidayMonths, "3", "Notice period for main holiday (months)"),
-            P(RuleKeys.NoticeOtherHolidayMonths, "1", "Notice period for other holiday (months)"),
+            P(RuleKeys.NoticeMainHolidayMonths, "3", "Notice for main holiday (months)"),
+            P(RuleKeys.NoticeOtherHolidayMonths, "1", "Notice for other holiday (months)"),
             P(RuleKeys.SupplementBasePercent, "1.00", "Holiday supplement: Holiday Agreement (%)"),
             // Raised holiday supplement: 0.95% until 1 May 2024, then 1.48%
             P(RuleKeys.SupplementRaisedPercent, "0.95", "Holiday supplement: raised (%)"),
             P(RuleKeys.SupplementRaisedPercent, "1.48", "Holiday supplement: raised (%)", new DateOnly(2024, 5, 1)),
-            P(RuleKeys.PayoutPercentWeeks1To5, "12.5", "Holiday allowance/payout weeks 1-5 (%)"),
-            P(RuleKeys.PayoutPercentWeek6, "2.5", "Holiday allowance/payout week 6 (%)"),
-            P(RuleKeys.TransferDeadlineWeek5, "12-31", "Transfer deadline 5th week (MM-dd)"),
-            P(RuleKeys.TransferDeadlineWeek6, "09-30", "Transfer deadline week 6 (MM-dd)")
+            P(RuleKeys.PayoutPercentWeeks1To5, "12.5", "Holiday pay / payout, weeks 1-5 (%)"),
+            P(RuleKeys.PayoutPercentWeek6, "2.5", "Holiday pay / payout, week 6 (%)"),
+            P(RuleKeys.TransferDeadlineWeek5, "12-31", "Transfer deadline, 5th week (MM-dd)"),
+            P(RuleKeys.TransferDeadlineWeek6, "09-30", "Transfer deadline, week 6 (MM-dd)")
         );
         await db.SaveChangesAsync();
     }
@@ -63,15 +67,15 @@ public static class DbSeeder
     {
         if (await db.Employees.AnyAsync()) return;
 
-        // Full-time
+        // Full time
         var anna = NewEmployee("Anna Fulltime", new DateOnly(2023, 1, 1), PayType.Salaried);
-        // Part-time: Mon-Wed 7.5 h = 22.5 h/week
+        // Part time: Mon-Wed 7.5 h = 22.5 h/week
         var bo = NewEmployee("Bo Parttime", new DateOnly(2024, 3, 1), PayType.Salaried);
         // Hourly paid
         var carla = NewEmployee("Carla Hourly", new DateOnly(2025, 6, 1), PayType.Hourly);
-        // New this month
-        var dan = NewEmployee("Dan Newhire", new DateOnly(2026, 11, 3), PayType.Salaried);
-        // Terminated
+        // New starter this month
+        var dan = NewEmployee("Dan Newstarter", new DateOnly(2026, 11, 3), PayType.Salaried);
+        // Has left the company
         var erik = NewEmployee("Erik Terminated", new DateOnly(2021, 2, 1), PayType.Salaried);
         erik.TerminationDate = new DateOnly(2026, 9, 30);
 
@@ -94,7 +98,7 @@ public static class DbSeeder
             db.HolidayAccounts.Add(new HolidayAccount { EmployeeId = e.Id, Type = AccountType.Week6 });
         }
 
-        // Salary history for Anna (holiday-qualifying salary per month), so the DKK calculation can be tested
+        // Salary history for Anna (holiday-qualifying salary per month) so the DKK calculation can be tested
         for (var month = new DateOnly(2025, 9, 1); month <= new DateOnly(2026, 10, 1); month = month.AddMonths(1))
         {
             db.MonthlySalaryRecords.Add(new MonthlySalaryRecord
