@@ -1,4 +1,5 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Entities;
+using LinqToDB.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
@@ -14,6 +15,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RuleParameter> RuleParameters => Set<RuleParameter>();
     public DbSet<CompanyDayOff> CompanyDaysOff => Set<CompanyDayOff>();
     public DbSet<MonthlySalaryRecord> MonthlySalaryRecords => Set<MonthlySalaryRecord>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        // Linq2db reuses this context's connection and model, plus the extra mapping
+        optionsBuilder.UseLinqToDB(builder => builder.AddMappingSchema(LinqToDbMapping.Schema));
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
