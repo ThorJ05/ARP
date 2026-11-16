@@ -1,7 +1,10 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Entities;
 using BusinessEsbjerg.Holiday.Domain.Enums;
+using LinqToDB;
+using LinqToDB.Async;
+using LinqToDB.Data;
+using LinqToDB.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
 
@@ -12,23 +15,27 @@ namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
 /// </summary>
 public static class DbSeeder
 {
-    public static async Task SeedAsync(AppDbContext db)
+    public static async Task SeedAsync(AppDbContext context)
     {
+        // Linq2db connection that reuses the EF Core connection and table mapping
+        await using var db = context.CreateLinqToDBConnection();
+
         await SeedRuleParametersAsync(db);
         await SeedCompanyDaysOffAsync(db);
         await SeedEmployeesAsync(db);
         await SeedUsersAsync(db);
     }
 
-    private static async Task SeedRuleParametersAsync(AppDbContext db)
+    private static async Task SeedRuleParametersAsync(DataConnection db)
     {
-        if (await db.RuleParameters.AnyAsync()) return;
+        if (await db.GetTable<RuleParameter>().AnyAsync()) return;
 
         var start = new DateOnly(2020, 9, 1); // new Holiday Act in force
         RuleParameter P(string key, string value, string desc, DateOnly? from = null) =>
             new() { Key = key, Value = value, Description = desc, EffectiveFrom = from ?? start };
 
-        db.RuleParameters.AddRange(
+        var rules = new[]
+        {
             P(RuleKeys.Weeks1To5DaysPerMonth, "2.08", "Weeks 1-5: holiday days earned per month"),
             P(RuleKeys.Week6Enabled, "true", "6th holiday week enabled"),
             P(RuleKeys.Week6HoursPerMonth, "3.083", "6th week: hours earned per month (full time)"),
@@ -47,25 +54,26 @@ public static class DbSeeder
             P(RuleKeys.PayoutPercentWeek6, "2.5", "Holiday pay / payout, week 6 (%)"),
             P(RuleKeys.TransferDeadlineWeek5, "12-31", "Transfer deadline, 5th week (MM-dd)"),
             P(RuleKeys.TransferDeadlineWeek6, "09-30", "Transfer deadline, week 6 (MM-dd)")
-        );
-        await db.SaveChangesAsync();
+        };
+
+        foreach (var rule in rules)
+            await db.InsertAsync(rule);
     }
 
-    private static async Task SeedCompanyDaysOffAsync(AppDbContext db)
+    private static async Task SeedCompanyDaysOffAsync(DataConnection db)
     {
-        if (await db.CompanyDaysOff.AnyAsync()) return;
+        if (await db.GetTable<CompanyDayOff>().AnyAsync()) return;
 
         foreach (var year in new[] { 2026, 2027, 2028 })
         {
-            db.CompanyDaysOff.Add(new CompanyDayOff { Date = new DateOnly(year, 12, 24), Name = "Christmas Eve" });
-            db.CompanyDaysOff.Add(new CompanyDayOff { Date = new DateOnly(year, 12, 31), Name = "New Year's Eve" });
+            await db.InsertAsync(new CompanyDayOff { Date = new DateOnly(year, 12, 24), Name = "Christmas Eve" });
+            await db.InsertAsync(new CompanyDayOff { Date = new DateOnly(year, 12, 31), Name = "New Year's Eve" });
         }
-        await db.SaveChangesAsync();
     }
 
-    private static async Task SeedEmployeesAsync(AppDbContext db)
+    private static async Task SeedEmployeesAsync(DataConnection db)
     {
-        if (await db.Employees.AnyAsync()) return;
+        if (await db.GetTable<Employee>().AnyAsync()) return;
 
         // Full time
         var anna = NewEmployee("Anna Fulltime", new DateOnly(2023, 1, 1), PayType.Salaried);
@@ -79,13 +87,14 @@ public static class DbSeeder
         var erik = NewEmployee("Erik Terminated", new DateOnly(2021, 2, 1), PayType.Salaried);
         erik.TerminationDate = new DateOnly(2026, 9, 30);
 
-        db.Employees.AddRange(anna, bo, carla, dan, erik);
-        await db.SaveChangesAsync(); // generates the Ids
+        // The database generates each Id, and Linq2db returns it
+        foreach (var e in new[] { anna, bo, carla, dan, erik })
+            e.Id = await db.InsertWithInt32IdentityAsync(e);
 
         foreach (var e in new[] { anna, carla, dan, erik })
-            db.WorkScheduleEntries.Add(WorkScheduleEntry.FullTime(e.Id, e.HireDate));
+            await db.InsertAsync(WorkScheduleEntry.FullTime(e.Id, e.HireDate));
 
-        db.WorkScheduleEntries.Add(new WorkScheduleEntry
+        await db.InsertAsync(new WorkScheduleEntry
         {
             EmployeeId = bo.Id,
             ValidFrom = bo.HireDate,
@@ -94,14 +103,14 @@ public static class DbSeeder
 
         foreach (var e in new[] { anna, bo, carla, dan, erik })
         {
-            db.HolidayAccounts.Add(new HolidayAccount { EmployeeId = e.Id, Type = AccountType.Weeks1To5 });
-            db.HolidayAccounts.Add(new HolidayAccount { EmployeeId = e.Id, Type = AccountType.Week6 });
+            await db.InsertAsync(new HolidayAccount { EmployeeId = e.Id, Type = AccountType.Weeks1To5 });
+            await db.InsertAsync(new HolidayAccount { EmployeeId = e.Id, Type = AccountType.Week6 });
         }
 
         // Salary history for Anna (holiday-qualifying salary per month) so the DKK calculation can be tested
         for (var month = new DateOnly(2025, 9, 1); month <= new DateOnly(2026, 10, 1); month = month.AddMonths(1))
         {
-            db.MonthlySalaryRecords.Add(new MonthlySalaryRecord
+            await db.InsertAsync(new MonthlySalaryRecord
             {
                 EmployeeId = anna.Id,
                 Month = month,
@@ -109,16 +118,14 @@ public static class DbSeeder
                 HoursWorked = 160.33m
             });
         }
-
-        await db.SaveChangesAsync();
     }
 
-    private static async Task SeedUsersAsync(AppDbContext db)
+    private static async Task SeedUsersAsync(DataConnection db)
     {
-        if (await db.Users.AnyAsync()) return;
+        if (await db.GetTable<User>().AnyAsync()) return;
 
         var hasher = new PasswordHasher<User>();
-        var anna = await db.Employees.FirstAsync(e => e.Name.StartsWith("Anna"));
+        var anna = await db.GetTable<Employee>().FirstAsync(e => e.Name.StartsWith("Anna"));
 
         User NewUser(string email, Role role, int? employeeId)
         {
@@ -127,12 +134,15 @@ public static class DbSeeder
             return u;
         }
 
-        db.Users.AddRange(
+        var users = new[]
+        {
             NewUser("anna@businessesbjerg.dk", Role.Employee, anna.Id),
             NewUser("regnskab@businessesbjerg.dk", Role.Accounting, null),
             NewUser("admin@businessesbjerg.dk", Role.Admin, null)
-        );
-        await db.SaveChangesAsync();
+        };
+
+        foreach (var user in users)
+            await db.InsertAsync(user);
     }
 
     private static Employee NewEmployee(string name, DateOnly hired, PayType payType) =>
