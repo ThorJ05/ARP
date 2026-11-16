@@ -3,13 +3,14 @@
 
 public class RuleParameter
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public string Key { get; set; } = "";
     public string Value { get; set; } = "";
     public DateOnly EffectiveFrom { get; set; }
     public string? Description { get; set; }
 }
 
+// sets the refrence from the database to variable in the program, for less mistakes.
 public static class RuleKeys
 {
     public const string Weeks1To5DaysPerMonth = "weeks1to5.days_per_month";           // 2.08

@@ -11,6 +11,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Email).HasMaxLength(200).IsRequired();
         b.HasIndex(x => x.Email).IsUnique();
         b.Property(x => x.PasswordHash).IsRequired();
@@ -25,6 +26,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
     public void Configure(EntityTypeBuilder<Employee> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
         b.Property(x => x.PayType).HasConversion<string>().HasMaxLength(20);
         b.HasMany(x => x.WorkSchedule).WithOne(x => x.Employee).HasForeignKey(x => x.EmployeeId);
@@ -39,6 +41,7 @@ public class WorkScheduleEntryConfiguration : IEntityTypeConfiguration<WorkSched
     public void Configure(EntityTypeBuilder<WorkScheduleEntry> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Ignore(x => x.WeeklyHours);
         foreach (var prop in new[]
                  {
@@ -61,6 +64,7 @@ public class HolidayAccountConfiguration : IEntityTypeConfiguration<HolidayAccou
     public void Configure(EntityTypeBuilder<HolidayAccount> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Type).HasConversion<string>().HasMaxLength(20);
         b.Ignore(x => x.BalanceHours);
         b.HasMany(x => x.Entries).WithOne(x => x.Account).HasForeignKey(x => x.AccountId);
@@ -75,6 +79,7 @@ public class LedgerEntryConfiguration : IEntityTypeConfiguration<LedgerEntry>
     public void Configure(EntityTypeBuilder<LedgerEntry> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Type).HasConversion<string>().HasMaxLength(20);
         b.Property(x => x.Hours).HasPrecision(8, 3);
         b.Property(x => x.Reason).HasMaxLength(500);
@@ -94,6 +99,7 @@ public class HolidayRequestConfiguration : IEntityTypeConfiguration<HolidayReque
     public void Configure(EntityTypeBuilder<HolidayRequest> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.AccountType).HasConversion<string>().HasMaxLength(20);
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
         b.Property(x => x.Hours).HasPrecision(8, 3);
@@ -109,6 +115,7 @@ public class RuleParameterConfiguration : IEntityTypeConfiguration<RuleParameter
     public void Configure(EntityTypeBuilder<RuleParameter> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Key).HasMaxLength(100).IsRequired();
         b.Property(x => x.Value).HasMaxLength(200).IsRequired();
         b.Property(x => x.Description).HasMaxLength(500);
@@ -123,6 +130,7 @@ public class CompanyDayOffConfiguration : IEntityTypeConfiguration<CompanyDayOff
     public void Configure(EntityTypeBuilder<CompanyDayOff> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
         b.HasIndex(x => x.Date).IsUnique();
     }
@@ -133,6 +141,7 @@ public class MonthlySalaryRecordConfiguration : IEntityTypeConfiguration<Monthly
     public void Configure(EntityTypeBuilder<MonthlySalaryRecord> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.QualifyingSalary).HasPrecision(12, 2);
         b.Property(x => x.HoursWorked).HasPrecision(8, 3);
         b.HasIndex(x => new { x.EmployeeId, x.Month }).IsUnique();

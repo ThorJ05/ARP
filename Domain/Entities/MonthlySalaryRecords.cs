@@ -3,8 +3,8 @@
 
 public class MonthlySalaryRecord
 {
-    public int Id { get; set; }
-    public int EmployeeId { get; set; }
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+    public Guid EmployeeId { get; set; }
     public Employee Employee { get; set; } = null!;
 
     /// <summary>First day of the month.</summary>

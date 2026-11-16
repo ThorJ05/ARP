@@ -1,13 +1,13 @@
 ﻿namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
 /// <summary>
-/// Work schedule with an effective-from date. When working hours change, a new record is added
-/// to ensure that historical calculations remain accurate.
+/// Work schedule with an effective-from date. When working hours change a new record is added
+/// to ensure that historical calculations is still acurate .
 /// </summary>
 public class WorkScheduleEntry
 {
-    public int Id { get; set; }
-    public int EmployeeId { get; set; }
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+    public Guid EmployeeId { get; set; }
     public Employee Employee { get; set; } = null!;
 
     public DateOnly ValidFrom { get; set; }
@@ -36,7 +36,7 @@ public class WorkScheduleEntry
     };
 
     // works like a constructor for our DbSeeder
-    public static WorkScheduleEntry FullTime(int employeeId, DateOnly validFrom) => new()
+    public static WorkScheduleEntry FullTime(Guid employeeId, DateOnly validFrom) => new()
     {
         EmployeeId = employeeId,
         ValidFrom = validFrom,

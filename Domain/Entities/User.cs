@@ -4,12 +4,12 @@ namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
 public class User
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public string Email { get; set; } = "";
     public string PasswordHash { get; set; } = "";
     public Role Role { get; set; }
 
-    /// <summary>Linked employee (null for e.g. a pure admin user).</summary>
-    public int? EmployeeId { get; set; }
+    /// <summary>Linked employee (null for a pure Admin user).</summary>
+    public Guid? EmployeeId { get; set; }
     public Employee? Employee { get; set; }
 }
