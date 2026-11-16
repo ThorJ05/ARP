@@ -9,7 +9,7 @@ public class User
     public string PasswordHash { get; set; } = "";
     public Role Role { get; set; }
 
-    /// <summary>Knyttet medarbejder (null for fx ren admin-bruger).</summary>
+    /// <summary>Linked employee (null for e.g. a pure admin user).</summary>
     public int? EmployeeId { get; set; }
     public Employee? Employee { get; set; }
 }

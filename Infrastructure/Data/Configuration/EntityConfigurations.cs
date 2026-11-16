@@ -51,7 +51,7 @@ public class WorkScheduleEntryConfiguration : IEntityTypeConfiguration<WorkSched
             b.Property(prop).HasPrecision(8, 3);
         }
 
-        // Én arbejdsplan pr. medarbejder pr. gyldig-fra-dato
+        // One work schedule per employee per valid-from date
         b.HasIndex(x => new { x.EmployeeId, x.ValidFrom }).IsUnique();
     }
 }
@@ -65,7 +65,7 @@ public class HolidayAccountConfiguration : IEntityTypeConfiguration<HolidayAccou
         b.Ignore(x => x.BalanceHours);
         b.HasMany(x => x.Entries).WithOne(x => x.Account).HasForeignKey(x => x.AccountId);
 
-        // Præcis én konto af hver type pr. medarbejder
+        // Exactly one account of each type per employee
         b.HasIndex(x => new { x.EmployeeId, x.Type }).IsUnique();
     }
 }
@@ -82,8 +82,8 @@ public class LedgerEntryConfiguration : IEntityTypeConfiguration<LedgerEntry>
         b.HasOne(x => x.Request).WithMany().HasForeignKey(x => x.RequestId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Idempotent optjening: samme konto + type + måned kan kun forekomme én gang.
-        // NULL i PeriodMonth (forbrug, korrektion m.m.) regnes som forskellige og blokeres ikke.
+        // Idempotent accrual: the same account + type + month can only occur once.
+        // NULL in PeriodMonth (usage, correction etc.) counts as distinct and is not blocked.
         b.HasIndex(x => new { x.AccountId, x.Type, x.PeriodMonth }).IsUnique();
         b.HasIndex(x => new { x.AccountId, x.Date });
     }
@@ -113,7 +113,7 @@ public class RuleParameterConfiguration : IEntityTypeConfiguration<RuleParameter
         b.Property(x => x.Value).HasMaxLength(200).IsRequired();
         b.Property(x => x.Description).HasMaxLength(500);
 
-        // Aldrig to værdier for samme nøgle med samme gyldig-fra-dato
+        // Never two values for the same key with the same effective-from date
         b.HasIndex(x => new { x.Key, x.EffectiveFrom }).IsUnique();
     }
 }

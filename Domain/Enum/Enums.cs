@@ -15,17 +15,17 @@ public enum PayType
 
 public enum AccountType
 {
-    Weeks1To5, // Ferieloven, samtidighedsferie
-    Week6      // 6. ferieuge (KL-aftale)
+    Weeks1To5, // Danish Holiday Act (Ferieloven), concurrent holiday
+    Week6      // 6th holiday week (KL agreement)
 }
 
 public enum LedgerEntryType
 {
-    Accrual,    // optjening (+) amount you earned +
-    Usage,      // afholdt ferie (-) vacation you already used -
+    Accrual,    // accrual (+): hours earned
+    Usage,      // holiday taken (-): hours already used
     Transfer,   // transaction for next period
     Payout,     // payout - 
-    Correction  // manuel correction after chargeback
+    Correction  // manual correction after chargeback
 }
 
 public enum RequestStatus

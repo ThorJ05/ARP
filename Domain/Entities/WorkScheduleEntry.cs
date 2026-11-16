@@ -35,7 +35,7 @@ public class WorkScheduleEntry
         _ => 0m
     };
 
-    
+    // works like a constructor for our DbSeeder
     public static WorkScheduleEntry FullTime(int employeeId, DateOnly validFrom) => new()
     {
         EmployeeId = employeeId,
