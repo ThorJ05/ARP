@@ -14,7 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<HolidayRequest> HolidayRequests => Set<HolidayRequest>();
     public DbSet<RuleParameter> RuleParameters => Set<RuleParameter>();
     public DbSet<CompanyDayOff> CompanyDaysOff => Set<CompanyDayOff>();
-    public DbSet<MonthlySalaryRecord> MonthlySalaryRecords => Set<MonthlySalaryRecord>();
+    public DbSet<TransferRequest> TransferRequests => Set<TransferRequest>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

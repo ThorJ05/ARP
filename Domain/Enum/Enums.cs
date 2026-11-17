@@ -2,15 +2,9 @@
 
 public enum Role
 {
-    Employee,
-    Accounting,
-    Admin
-}
-
-public enum PayType
-{
-    Salaried, // fixed vacation with salary
-    Hourly    // hourly salary, holiday allowance
+    Employee,    // normal employee login
+    Accountant,  // approves and rejects requests (only one)
+    SystemOwner  // creates users and sets global rules (only one)
 }
 
 public enum AccountType
@@ -21,11 +15,12 @@ public enum AccountType
 
 public enum LedgerEntryType
 {
-    Accrual,    // accrual (+): hours earned
-    Usage,      // holiday taken (-): hours already used
-    Transfer,   // transaction for next period
-    Payout,     // payout - 
-    Correction  // manual correction after chargeback
+    Accrual,            // (+) hours earned
+    Usage,              // (-) holiday taken
+    Transfer,           // hours moved to the next period
+    Payout,             // (-) hours paid out by payroll (we don't store the amount)
+    Correction,         // manual fix
+    ScheduleConversion  // balance changed because the work schedule changed
 }
 
 public enum RequestStatus
@@ -33,5 +28,6 @@ public enum RequestStatus
     Pending,
     Approved,
     Rejected,
+    CancellationRequested, // employee wants to cancel approved holiday
     Cancelled
 }

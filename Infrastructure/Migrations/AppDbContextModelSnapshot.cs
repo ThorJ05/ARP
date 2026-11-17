@@ -56,11 +56,6 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("PayType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<DateOnly?>("TerminationDate")
                         .HasColumnType("date");
 
@@ -124,24 +119,29 @@ namespace Infrastructure.Migrations
                         .HasColumnType("date");
 
                     b.Property<decimal>("Hours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
 
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DecidedByUserId");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("EmployeeId", "StartDate", "EndDate");
 
-                    b.ToTable("HolidayRequests");
+                    b.ToTable("HolidayRequests", t =>
+                        {
+                            t.HasCheckConstraint("CK_HolidayRequests_Valid", "\"EndDate\" >= \"StartDate\" AND \"Hours\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.LedgerEntry", b =>
@@ -162,8 +162,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("date");
 
                     b.Property<decimal>("Hours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
 
                     b.Property<DateOnly?>("PeriodMonth")
                         .HasColumnType("date");
@@ -175,6 +175,9 @@ namespace Infrastructure.Migrations
                     b.Property<Guid?>("RequestId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("TransferRequestId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -184,39 +187,14 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("RequestId");
 
+                    b.HasIndex("TransferRequestId");
+
                     b.HasIndex("AccountId", "Date");
 
                     b.HasIndex("AccountId", "Type", "PeriodMonth")
                         .IsUnique();
 
                     b.ToTable("LedgerEntries");
-                });
-
-            modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.MonthlySalaryRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("HoursWorked")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
-
-                    b.Property<DateOnly>("Month")
-                        .HasColumnType("date");
-
-                    b.Property<decimal>("QualifyingSalary")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId", "Month")
-                        .IsUnique();
-
-                    b.ToTable("MonthlySalaryRecords");
                 });
 
             modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.RuleParameter", b =>
@@ -249,6 +227,62 @@ namespace Infrastructure.Migrations
                     b.ToTable("RuleParameters");
                 });
 
+            modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.TransferRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccountType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DecidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DecisionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("FromPeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Hours")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DecidedByUserId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("EmployeeId", "FromPeriodStart");
+
+                    b.ToTable("TransferRequests", t =>
+                        {
+                            t.HasCheckConstraint("CK_TransferRequests_PositiveHours", "\"Hours\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -276,9 +310,17 @@ namespace Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("EmployeeId");
+                    b.HasIndex("EmployeeId")
+                        .IsUnique();
 
-                    b.ToTable("Users");
+                    b.HasIndex("Role")
+                        .IsUnique()
+                        .HasFilter("\"Role\" <> 'Employee'");
+
+                    b.ToTable("Users", t =>
+                        {
+                            t.HasCheckConstraint("CK_Users_EmployeeLink", "(\"Role\" = 'Employee') = (\"EmployeeId\" IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.WorkScheduleEntry", b =>
@@ -289,43 +331,48 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("FriHours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
+                    b.Property<TimeOnly?>("FridayEnd")
+                        .HasColumnType("time without time zone");
 
-                    b.Property<decimal>("MonHours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
+                    b.Property<TimeOnly?>("FridayStart")
+                        .HasColumnType("time without time zone");
 
-                    b.Property<decimal>("SatHours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
+                    b.Property<TimeOnly?>("MondayEnd")
+                        .HasColumnType("time without time zone");
 
-                    b.Property<decimal>("SunHours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
+                    b.Property<TimeOnly?>("MondayStart")
+                        .HasColumnType("time without time zone");
 
-                    b.Property<decimal>("ThuHours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
+                    b.Property<TimeOnly?>("ThursdayEnd")
+                        .HasColumnType("time without time zone");
 
-                    b.Property<decimal>("TueHours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
+                    b.Property<TimeOnly?>("ThursdayStart")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("TuesdayEnd")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("TuesdayStart")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("WednesdayEnd")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("WednesdayStart")
+                        .HasColumnType("time without time zone");
 
                     b.Property<DateOnly>("ValidFrom")
                         .HasColumnType("date");
-
-                    b.Property<decimal>("WedHours")
-                        .HasPrecision(8, 3)
-                        .HasColumnType("numeric(8,3)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId", "ValidFrom")
                         .IsUnique();
 
-                    b.ToTable("WorkScheduleEntries");
+                    b.ToTable("WorkScheduleEntries", t =>
+                        {
+                            t.HasCheckConstraint("CK_WorkScheduleEntries_ValidTimes", "(\"MondayStart\" IS NULL) = (\"MondayEnd\" IS NULL) AND (\"MondayStart\" IS NULL OR \"MondayEnd\" > \"MondayStart\") AND (\"TuesdayStart\" IS NULL) = (\"TuesdayEnd\" IS NULL) AND (\"TuesdayStart\" IS NULL OR \"TuesdayEnd\" > \"TuesdayStart\") AND (\"WednesdayStart\" IS NULL) = (\"WednesdayEnd\" IS NULL) AND (\"WednesdayStart\" IS NULL OR \"WednesdayEnd\" > \"WednesdayStart\") AND (\"ThursdayStart\" IS NULL) = (\"ThursdayEnd\" IS NULL) AND (\"ThursdayStart\" IS NULL OR \"ThursdayEnd\" > \"ThursdayStart\") AND (\"FridayStart\" IS NULL) = (\"FridayEnd\" IS NULL) AND (\"FridayStart\" IS NULL OR \"FridayEnd\" > \"FridayStart\")");
+                        });
                 });
 
             modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.HolidayAccount", b =>
@@ -341,11 +388,18 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.HolidayRequest", b =>
                 {
+                    b.HasOne("BusinessEsbjerg.Holiday.Domain.Entities.User", "DecidedBy")
+                        .WithMany()
+                        .HasForeignKey("DecidedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("BusinessEsbjerg.Holiday.Domain.Entities.Employee", "Employee")
                         .WithMany("Requests")
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("DecidedBy");
 
                     b.Navigation("Employee");
                 });
@@ -363,18 +417,32 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("RequestId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("BusinessEsbjerg.Holiday.Domain.Entities.TransferRequest", "TransferRequest")
+                        .WithMany()
+                        .HasForeignKey("TransferRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Account");
 
                     b.Navigation("Request");
+
+                    b.Navigation("TransferRequest");
                 });
 
-            modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.MonthlySalaryRecord", b =>
+            modelBuilder.Entity("BusinessEsbjerg.Holiday.Domain.Entities.TransferRequest", b =>
                 {
+                    b.HasOne("BusinessEsbjerg.Holiday.Domain.Entities.User", "DecidedBy")
+                        .WithMany()
+                        .HasForeignKey("DecidedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("BusinessEsbjerg.Holiday.Domain.Entities.Employee", "Employee")
-                        .WithMany("SalaryRecords")
+                        .WithMany("TransferRequests")
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("DecidedBy");
 
                     b.Navigation("Employee");
                 });
@@ -384,7 +452,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("BusinessEsbjerg.Holiday.Domain.Entities.Employee", "Employee")
                         .WithMany()
                         .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Employee");
                 });
@@ -406,7 +474,7 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("Requests");
 
-                    b.Navigation("SalaryRecords");
+                    b.Navigation("TransferRequests");
 
                     b.Navigation("WorkSchedule");
                 });
