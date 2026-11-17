@@ -42,6 +42,7 @@ public class EmployeeRepository(AppDbContext context) : IEmployeeRepository
     public async Task<IReadOnlyList<HolidayRequest>> GetRequestsAsync(Guid employeeId, CancellationToken ct = default)
     {
         await using var db = context.CreateLinqToDBConnection();
+        
         return await db.GetTable<HolidayRequest>()
             .Where(r => r.EmployeeId == employeeId)
             .OrderByDescending(r => r.StartDate)

@@ -29,7 +29,10 @@ public class AuthService(
 
         var now = clock.UtcNow;
         if (user.IsLockedOut(now))
+        {
+            hasher.Hash(new User(), password); // same time as a wrong password, so the answer doesn't show the lock
             return LoginResult.Failed("account is locked");
+        }
 
         var check = hasher.Verify(user, password);
         if (check == PasswordCheck.Failed)

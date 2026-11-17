@@ -5,4 +5,9 @@ export const API_URL =
         ? "http://localhost:5288"
         : "https://arp-api.fly.dev";
 
-export const api = new Api({baseUrl: API_URL});
+// After login the token is stored here with api.setSecurityData(token),
+// and it's sent as "Authorization: Bearer <token>" on every request the API marks as secured.
+export const api = new Api<string>({
+    baseUrl: API_URL,
+    securityWorker: (token) => (token ? {headers: {Authorization: `Bearer ${token}`}} : {}),
+});
