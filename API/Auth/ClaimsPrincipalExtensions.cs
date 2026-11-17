@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
 
-namespace API.Auth;
+namespace BusinessEsbjerg.Holiday.Api.Auth;
 
 public static class ClaimsPrincipalExtensions
 {

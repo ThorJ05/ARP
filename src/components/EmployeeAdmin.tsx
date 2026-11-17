@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import type { EmployeeView, ScheduleView } from "../api/api";
+import type { EmployeeResponse, ScheduleResponse } from "../api/api";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { errorMessage, isUnauthorized } from "../utils/errors";
@@ -17,9 +17,9 @@ const today = () => new Date().toISOString().slice(0, 10);
 /** List of employees, their schedule history, a new schedule and (for the system owner) the end date. */
 export function EmployeeAdmin({ canSetEndDate, refreshKey = 0 }: Props) {
   const { logout } = useAuth();
-  const [employees, setEmployees] = useState<EmployeeView[] | null>(null);
-  const [selected, setSelected] = useState<EmployeeView | null>(null);
-  const [history, setHistory] = useState<ScheduleView[] | null>(null);
+  const [employees, setEmployees] = useState<EmployeeResponse[] | null>(null);
+  const [selected, setSelected] = useState<EmployeeResponse | null>(null);
+  const [history, setHistory] = useState<ScheduleResponse[] | null>(null);
   const [validFrom, setValidFrom] = useState(today());
   const [times, setTimes] = useState<DayTimes>(fullTime);
   const [endDate, setEndDate] = useState("");
@@ -43,7 +43,7 @@ export function EmployeeAdmin({ canSetEndDate, refreshKey = 0 }: Props) {
   }, [fail]);
 
   const select = useCallback(
-    async (employee: EmployeeView) => {
+    async (employee: EmployeeResponse) => {
       setSelected(employee);
       setMessage(null);
       setError(null);

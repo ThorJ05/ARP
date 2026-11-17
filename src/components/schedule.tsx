@@ -1,4 +1,4 @@
-import type { ScheduleView, WorkWeek } from "../api/api";
+import type { ScheduleResponse, WorkWeekDto } from "../api/api";
 
 export const days = ["monday", "tuesday", "wednesday", "thursday", "friday"] as const;
 export type Day = (typeof days)[number];
@@ -31,8 +31,8 @@ export function weeklyHours(times: DayTimes): number {
 }
 
 /** The API wants "HH:mm:ss", and null for a day off. */
-export function toWorkWeek(times: DayTimes): WorkWeek {
-  const week: WorkWeek = {};
+export function toWorkWeek(times: DayTimes): WorkWeekDto {
+  const week: WorkWeekDto = {};
   for (const d of days) {
     week[`${d}Start` as const] = times[d].start ? `${times[d].start}:00` : null;
     week[`${d}End` as const] = times[d].end ? `${times[d].end}:00` : null;
@@ -40,7 +40,7 @@ export function toWorkWeek(times: DayTimes): WorkWeek {
   return week;
 }
 
-export function fromWorkWeek(week: WorkWeek | undefined): DayTimes {
+export function fromWorkWeek(week: WorkWeekDto | undefined): DayTimes {
   const times = { ...fullTime };
   for (const d of days) {
     times[d] = { start: shortTime(week?.[`${d}Start`]), end: shortTime(week?.[`${d}End`]) };
@@ -70,7 +70,7 @@ export function ScheduleFields({ times, onChange }: { times: DayTimes; onChange:
 }
 
 /** The schedule history, newest first. The schedule without an end date is the one in use. */
-export function ScheduleTable({ schedules }: { schedules: ScheduleView[] }) {
+export function ScheduleTable({ schedules }: { schedules: ScheduleResponse[] }) {
   if (schedules.length === 0) return <p className="muted">No work schedule yet.</p>;
 
   return (

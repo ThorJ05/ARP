@@ -69,21 +69,21 @@ export interface MyRequestResponse {
   createdAtUtc?: string;
 }
 
-export interface ScheduleView {
+export interface ScheduleResponse {
   /** @format guid */
   id?: string;
   /** @format date */
   validFrom?: string;
   /** @format date */
   validTo?: string | null;
-  week?: WorkWeek;
+  week?: WorkWeekDto;
   /** @format decimal */
   weeklyHours?: number;
   /** @format decimal */
   averageDayHours?: number;
 }
 
-export interface WorkWeek {
+export interface WorkWeekDto {
   /** @format time */
   mondayStart?: string | null;
   /** @format time */
@@ -106,23 +106,7 @@ export interface WorkWeek {
   fridayEnd?: string | null;
 }
 
-export interface CreatedEmployeeResponse {
-  /** @format guid */
-  employeeId?: string;
-  /** @format guid */
-  userId?: string;
-}
-
-export interface CreateEmployeeRequest {
-  name?: string;
-  email?: string;
-  password?: string;
-  /** @format date */
-  hireDate?: string;
-  schedule?: WorkWeek;
-}
-
-export interface EmployeeView {
+export interface EmployeeResponse {
   /** @format guid */
   id?: string;
   name?: string;
@@ -139,10 +123,26 @@ export interface EmployeeView {
   week6Hours?: number;
 }
 
+export interface CreatedEmployeeResponse {
+  /** @format guid */
+  employeeId?: string;
+  /** @format guid */
+  userId?: string;
+}
+
+export interface CreateEmployeeRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  /** @format date */
+  hireDate?: string;
+  schedule?: WorkWeekDto;
+}
+
 export interface NewScheduleRequest {
   /** @format date */
   validFrom?: string;
-  schedule?: WorkWeek;
+  schedule?: WorkWeekDto;
 }
 
 export interface TerminationRequest {
@@ -508,32 +508,10 @@ export class Api<
      * @secure
      */
     getMySchedules: (params: RequestParams = {}) =>
-      this.request<ScheduleView[], any>({
+      this.request<ScheduleResponse[], any>({
         path: `/api/me/schedules`,
         method: "GET",
         secure: true,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Users
-     * @name CreateEmployee
-     * @request POST:/api/users/employees
-     * @secure
-     */
-    createEmployee: (data: CreateEmployeeRequest, params: RequestParams = {}) =>
-      this.request<
-        CreatedEmployeeResponse,
-        HttpValidationProblemDetails | ProblemDetails
-      >({
-        path: `/api/users/employees`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -547,10 +525,32 @@ export class Api<
      * @secure
      */
     getEmployees: (params: RequestParams = {}) =>
-      this.request<EmployeeView[], any>({
+      this.request<EmployeeResponse[], any>({
         path: `/api/employees`,
         method: "GET",
         secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Employees
+     * @name CreateEmployee
+     * @request POST:/api/employees
+     * @secure
+     */
+    createEmployee: (data: CreateEmployeeRequest, params: RequestParams = {}) =>
+      this.request<
+        CreatedEmployeeResponse,
+        HttpValidationProblemDetails | ProblemDetails
+      >({
+        path: `/api/employees`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -564,7 +564,7 @@ export class Api<
      * @secure
      */
     getScheduleHistory: (id: string, params: RequestParams = {}) =>
-      this.request<ScheduleView[], void>({
+      this.request<ScheduleResponse[], void>({
         path: `/api/employees/${id}/schedules`,
         method: "GET",
         secure: true,
@@ -607,7 +607,7 @@ export class Api<
       data: TerminationRequest,
       params: RequestParams = {},
     ) =>
-      this.request<void, void>({
+      this.request<void, ProblemDetails | void>({
         path: `/api/employees/${id}/termination`,
         method: "PUT",
         body: data,

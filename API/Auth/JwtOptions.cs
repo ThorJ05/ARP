@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace API.Auth;
+namespace BusinessEsbjerg.Holiday.Api.Auth;
 
 public class JwtOptions
 {

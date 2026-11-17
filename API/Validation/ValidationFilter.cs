@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace API.Validation;
+namespace BusinessEsbjerg.Holiday.Api.Validation;
 
 public class ValidationFilter<T> : IEndpointFilter where T : class
 {

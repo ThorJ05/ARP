@@ -1,6 +1,6 @@
-﻿using Service.Abstractions;
+﻿using BusinessEsbjerg.Holiday.Service.Abstractions;
 
-namespace Infrastructure;
+namespace BusinessEsbjerg.Holiday.Infrastructure;
 
 public class SystemClock : IClock
 {

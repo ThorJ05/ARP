@@ -1,4 +1,4 @@
-﻿namespace API.Auth;
+﻿namespace BusinessEsbjerg.Holiday.Api.Auth;
 
 /// <summary>Names of the authorization policies. See the access matrix in README.md.</summary>
 public static class Policies

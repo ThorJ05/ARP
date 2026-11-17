@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Service.Abstractions;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
 
-namespace API.Auth;
+namespace BusinessEsbjerg.Holiday.Api.Auth;
 
 public static class AuthSetup
 {

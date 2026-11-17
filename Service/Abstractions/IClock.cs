@@ -1,4 +1,4 @@
-﻿namespace Service.Abstractions;
+﻿namespace BusinessEsbjerg.Holiday.Service.Abstractions;
 
 public interface IClock
 {
