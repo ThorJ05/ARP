@@ -1,12 +1,18 @@
+using API.Auth;
+using API.Endpoints;
 using API.Errors;
 using API.Options;
-using API.Validation;
+using BusinessEsbjerg.Holiday.Domain.Enums;
+using BusinessEsbjerg.Holiday.Infrastructure.Data;
 using FluentValidation;
 using Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using NSwag;
+using NSwag.Generation.Processors.Security;
 using Serilog;
 using Service.Abstractions;
-using BusinessEsbjerg.Holiday.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using Service.Auth;
+using Service.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 FluentValidation.ValidatorOptions.Global.LanguageManager.Culture = new System.Globalization.CultureInfo("en");
@@ -44,12 +50,28 @@ builder.Services.AddProblemDetails();
 // Validation
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+// Login (JWT) and who can access what (policies)
+builder.Services.AddJwtAuth(builder.Configuration);
+builder.Services.AddSingleton(builder.Configuration.GetSection("Lockout").Get<LockoutSettings>() ?? new LockoutSettings());
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserService>();
+
 // OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApiDocument(config =>
 {
     config.Title = "ARP API";
     config.Version = "v1";
+
+    // "Authorize" button in Swagger: paste the token from /api/auth/login
+    config.AddSecurity("Bearer", new OpenApiSecurityScheme
+    {
+        Type = OpenApiSecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Paste the token from /api/auth/login"
+    });
+    config.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("Bearer"));
 });
 
 builder.Services.AddInfrastructure();
@@ -61,10 +83,19 @@ using (var scope = app.Services.CreateScope())
     var db =  scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
 
-    if (app.Environment.IsDevelopment())
-    {
-        await DbSeeder.SeedAsync(db);
-    }
+    // rule values always, test data only in development
+    await DbSeeder.SeedAsync(db, includeTestData: app.Environment.IsDevelopment());
+
+    // the accountant and system owner logins on a new database (fly secrets in production)
+    var warnings = await AccountBootstrapper.EnsureAsync(db,
+    [
+        new BootstrapLogin(Role.Accountant,
+            app.Configuration["Bootstrap:Accountant:Email"], app.Configuration["Bootstrap:Accountant:Password"]),
+        new BootstrapLogin(Role.SystemOwner,
+            app.Configuration["Bootstrap:SystemOwner:Email"], app.Configuration["Bootstrap:SystemOwner:Password"])
+    ]);
+    foreach (var warning in warnings)
+        app.Logger.LogWarning("{Warning}", warning);
     
 }
 
@@ -76,18 +107,19 @@ app.UseCors();
 app.UseOpenApi();      // /swagger/v1/swagger.json
 app.UseSwaggerUi();    // /swagger
 
-app.MapHealthChecks("/health");
+// Everything after this needs a valid token, unless the endpoint says AllowAnonymous
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.MapGet("/", (IClock clock) => $"Hello World, today is {clock.Today}")
+    .AllowAnonymous()
     .WithName("GetHello")
     .WithSummary("Returns a greeting with today's date");
 
-// Temporary demo endpoints, delete when real endpoints exist
-app.MapPost("/api/validation-demo", (ValidationDemoRequest request) => Results.Ok(request))
-    .WithName("ValidationDemo")
-    .WithValidation<ValidationDemoRequest>();
-
-app.MapGet("/api/error-demo", IResult () => throw new InvalidOperationException("Demo error"))
-    .WithName("ErrorDemo");
+app.MapAuthEndpoints();
+app.MapMeEndpoints();
+app.MapUserEndpoints();
 
 app.Run();
