@@ -87,9 +87,9 @@ public static class DbSeeder
         var erik = NewEmployee("Erik Terminated", new DateOnly(2021, 2, 1), PayType.Salaried);
         erik.TerminationDate = new DateOnly(2026, 9, 30);
 
-        // The database generates each Id, and Linq2db returns it
+        // Each entity creates its own Guid Id, so the Id is known before the insert
         foreach (var e in new[] { anna, bo, carla, dan, erik })
-            e.Id = await db.InsertWithInt32IdentityAsync(e);
+            await db.InsertAsync(e);
 
         foreach (var e in new[] { anna, carla, dan, erik })
             await db.InsertAsync(WorkScheduleEntry.FullTime(e.Id, e.HireDate));
@@ -127,7 +127,7 @@ public static class DbSeeder
         var hasher = new PasswordHasher<User>();
         var anna = await db.GetTable<Employee>().FirstAsync(e => e.Name.StartsWith("Anna"));
 
-        User NewUser(string email, Role role, int? employeeId)
+        User NewUser(string email, Role role, Guid? employeeId)
         {
             var u = new User { Email = email, Role = role, EmployeeId = employeeId };
             u.PasswordHash = hasher.HashPassword(u, "Test1234!");

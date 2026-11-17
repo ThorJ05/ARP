@@ -4,7 +4,7 @@ namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
 public class Employee
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public string Name { get; set; } = "";
     public DateOnly HireDate { get; set; }
     public DateOnly? TerminationDate { get; set; }

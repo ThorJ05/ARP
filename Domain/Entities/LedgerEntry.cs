@@ -3,14 +3,14 @@
 namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
 /// <summary>
-/// Append-only entry. Positive hours = accrual, negative hours = usage/payout.
-/// Corrections and cancellations are recorded as new entries with the opposite sign,
+///  Positive hours = accrual, negative hours = usage/payout.
+/// Corrections and cancellations  are recorded as new entries with the opposite siggn ,
 /// never by modifying existing entries.
 /// </summary>
 public class LedgerEntry
 {
-    public int Id { get; set; }
-    public int AccountId { get; set; }
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+    public Guid AccountId { get; set; }
     public HolidayAccount Account { get; set; } = null!;
 
     public LedgerEntryType Type { get; set; }
@@ -22,7 +22,7 @@ public class LedgerEntry
     public DateOnly Date { get; set; }
 
     /// <summary>/// For accrual entries only: the accrual month (represented by the first day of the month).
-    /// Used to ensure idempotency.</summary>
+    /// </summary>
     public DateOnly? PeriodMonth { get; set; }
 
     /// <summary>when the earned hours expire (31. dec / 30. apr).</summary>
@@ -30,7 +30,7 @@ public class LedgerEntry
 
     public string? Reason { get; set; }
 
-    public int? RequestId { get; set; }
+    public Guid? RequestId { get; set; }
     public HolidayRequest? Request { get; set; }
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

@@ -5,8 +5,8 @@ namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
 public class HolidayAccount
 {
-    public int Id { get; set; }
-    public int EmployeeId { get; set; }
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+    public Guid EmployeeId { get; set; }
     public Employee Employee { get; set; } = null!;
     public AccountType Type { get; set; }
 
