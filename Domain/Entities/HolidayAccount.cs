@@ -2,7 +2,7 @@
 
 namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
-
+/// <summary>A holiday account (weeks 1-5 or week 6). The balance is the sum of all entries.</summary>
 public class HolidayAccount
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();

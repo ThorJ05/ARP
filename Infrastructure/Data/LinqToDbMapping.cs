@@ -18,6 +18,8 @@ public static class LinqToDbMapping
         var builder = new FluentMappingBuilder();
 
         builder.Entity<WorkScheduleEntry>().Ignore(x => x.WeeklyHours);
+        builder.Entity<WorkScheduleEntry>().Ignore(x => x.WorkingDays);
+        builder.Entity<WorkScheduleEntry>().Ignore(x => x.AverageDayHours);
         builder.Entity<HolidayAccount>().Ignore(x => x.BalanceHours);
 
         builder.Build();

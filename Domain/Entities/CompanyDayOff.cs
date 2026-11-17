@@ -1,6 +1,6 @@
 ﻿namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
-/// <summary>comapny free day.</summary>
+/// <summary>Company day off set by the system owner, e.g. 24 December. Doesn't cost any holiday.</summary>
 public class CompanyDayOff
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();

@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Data.Configurations;
 
-
-
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> b)
@@ -16,8 +14,18 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         b.HasIndex(x => x.Email).IsUnique();
         b.Property(x => x.PasswordHash).IsRequired();
         b.Property(x => x.Role).HasConversion<string>().HasMaxLength(20);
+
+        // only one accountant and one system owner
+        b.HasIndex(x => x.Role).IsUnique().HasFilter("\"Role\" <> 'Employee'");
+
+        // one login per employee
         b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => x.EmployeeId).IsUnique();
+
+        // employee logins must have an employee, accountant and system owner must not
+        b.ToTable(t => t.HasCheckConstraint("CK_Users_EmployeeLink",
+            "(\"Role\" = 'Employee') = (\"EmployeeId\" IS NOT NULL)"));
     }
 }
 
@@ -28,34 +36,33 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
-        b.Property(x => x.PayType).HasConversion<string>().HasMaxLength(20);
         b.HasMany(x => x.WorkSchedule).WithOne(x => x.Employee).HasForeignKey(x => x.EmployeeId);
         b.HasMany(x => x.Accounts).WithOne(x => x.Employee).HasForeignKey(x => x.EmployeeId);
         b.HasMany(x => x.Requests).WithOne(x => x.Employee).HasForeignKey(x => x.EmployeeId);
-        b.HasMany(x => x.SalaryRecords).WithOne(x => x.Employee).HasForeignKey(x => x.EmployeeId);
+        b.HasMany(x => x.TransferRequests).WithOne(x => x.Employee).HasForeignKey(x => x.EmployeeId);
     }
 }
 
 public class WorkScheduleEntryConfiguration : IEntityTypeConfiguration<WorkScheduleEntry>
 {
+    private static readonly string[] WorkWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+    // a day needs both start and end (or none), and end must be after start
+    private static readonly string ValidTimesSql = string.Join(" AND ", WorkWeek.Select(d =>
+        $"(\"{d}Start\" IS NULL) = (\"{d}End\" IS NULL) AND (\"{d}Start\" IS NULL OR \"{d}End\" > \"{d}Start\")"));
+
     public void Configure(EntityTypeBuilder<WorkScheduleEntry> b)
     {
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Ignore(x => x.WeeklyHours);
-        foreach (var prop in new[]
-                 {
-                     nameof(WorkScheduleEntry.MonHours), nameof(WorkScheduleEntry.TueHours),
-                     nameof(WorkScheduleEntry.WedHours), nameof(WorkScheduleEntry.ThuHours),
-                     nameof(WorkScheduleEntry.FriHours), nameof(WorkScheduleEntry.SatHours),
-                     nameof(WorkScheduleEntry.SunHours)
-                 })
-        {
-            b.Property(prop).HasPrecision(8, 3);
-        }
+        b.Ignore(x => x.WorkingDays);
+        b.Ignore(x => x.AverageDayHours);
 
         // One work schedule per employee per valid-from date
         b.HasIndex(x => new { x.EmployeeId, x.ValidFrom }).IsUnique();
+
+        b.ToTable(t => t.HasCheckConstraint("CK_WorkScheduleEntries_ValidTimes", ValidTimesSql));
     }
 }
 
@@ -81,10 +88,12 @@ public class LedgerEntryConfiguration : IEntityTypeConfiguration<LedgerEntry>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Type).HasConversion<string>().HasMaxLength(20);
-        b.Property(x => x.Hours).HasPrecision(8, 3);
+        b.Property(x => x.Hours).HasPrecision(8, 2);
         b.Property(x => x.Reason).HasMaxLength(500);
 
         b.HasOne(x => x.Request).WithMany().HasForeignKey(x => x.RequestId)
+            .OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(x => x.TransferRequest).WithMany().HasForeignKey(x => x.TransferRequestId)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Idempotent accrual: the same account + type + month can only occur once.
@@ -101,12 +110,41 @@ public class HolidayRequestConfiguration : IEntityTypeConfiguration<HolidayReque
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.AccountType).HasConversion<string>().HasMaxLength(20);
-        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
-        b.Property(x => x.Hours).HasPrecision(8, 3);
+        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(30);
+        b.Property(x => x.Hours).HasPrecision(8, 2);
         b.Property(x => x.Comment).HasMaxLength(1000);
         b.Property(x => x.DecisionReason).HasMaxLength(1000);
+
+        b.HasOne(x => x.DecidedBy).WithMany().HasForeignKey(x => x.DecidedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         b.HasIndex(x => new { x.EmployeeId, x.StartDate, x.EndDate });
         b.HasIndex(x => x.Status);
+
+        b.ToTable(t => t.HasCheckConstraint("CK_HolidayRequests_Valid",
+            "\"EndDate\" >= \"StartDate\" AND \"Hours\" > 0"));
+    }
+}
+
+public class TransferRequestConfiguration : IEntityTypeConfiguration<TransferRequest>
+{
+    public void Configure(EntityTypeBuilder<TransferRequest> b)
+    {
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
+        b.Property(x => x.AccountType).HasConversion<string>().HasMaxLength(20);
+        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(30);
+        b.Property(x => x.Hours).HasPrecision(8, 2);
+        b.Property(x => x.Comment).HasMaxLength(1000);
+        b.Property(x => x.DecisionReason).HasMaxLength(1000);
+
+        b.HasOne(x => x.DecidedBy).WithMany().HasForeignKey(x => x.DecidedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        b.HasIndex(x => new { x.EmployeeId, x.FromPeriodStart });
+        b.HasIndex(x => x.Status);
+
+        b.ToTable(t => t.HasCheckConstraint("CK_TransferRequests_PositiveHours", "\"Hours\" > 0"));
     }
 }
 
@@ -133,17 +171,5 @@ public class CompanyDayOffConfiguration : IEntityTypeConfiguration<CompanyDayOff
         b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
         b.HasIndex(x => x.Date).IsUnique();
-    }
-}
-
-public class MonthlySalaryRecordConfiguration : IEntityTypeConfiguration<MonthlySalaryRecord>
-{
-    public void Configure(EntityTypeBuilder<MonthlySalaryRecord> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
-        b.Property(x => x.QualifyingSalary).HasPrecision(12, 2);
-        b.Property(x => x.HoursWorked).HasPrecision(8, 3);
-        b.HasIndex(x => new { x.EmployeeId, x.Month }).IsUnique();
     }
 }
