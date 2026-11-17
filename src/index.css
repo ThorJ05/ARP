@@ -284,3 +284,15 @@ footer {
   margin-top: 2rem;
   font-size: 0.85rem;
 }
+
+.card.wide {
+  width: min(64rem, 100%);
+  overflow-x: auto;
+}
+tr.current td {
+  font-weight: 600;
+}
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+}

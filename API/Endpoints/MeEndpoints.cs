@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using API.Auth;
 using Service.Abstractions;
+using Service.Schedules;
 
 namespace API.Endpoints;
 
@@ -20,7 +21,7 @@ public static class MeEndpoints
 
         group.MapGet("/balances", async (ClaimsPrincipal principal, IEmployeeRepository employees, CancellationToken ct) =>
             {
-                var balances = await employees.GetBalancesAsync(principal.GetEmployeeId()!.Value, ct);
+                var balances = await employees.GetBalancesAsync(principal.GetEmployeeId()!.Value, ct: ct);
                 return TypedResults.Ok(balances.Select(b => new BalanceResponse(b.Type.ToString(), b.Hours)).ToList());
             })
             .WithName("GetMyBalances")
@@ -35,5 +36,12 @@ public static class MeEndpoints
             })
             .WithName("GetMyRequests")
             .WithSummary("My holiday requests");
+
+        // read only: there is no endpoint where employees can change their own schedule
+        group.MapGet("/schedules", async (ClaimsPrincipal principal, IEmployeeRepository employees, CancellationToken ct) =>
+                TypedResults.Ok(ScheduleService.ToViews(
+                    await employees.GetSchedulesAsync(principal.GetEmployeeId()!.Value, ct))))
+            .WithName("GetMySchedules")
+            .WithSummary("My work schedule history");
     }
 }

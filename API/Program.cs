@@ -12,6 +12,7 @@ using NSwag.Generation.Processors.Security;
 using Serilog;
 using Service.Abstractions;
 using Service.Auth;
+using Service.Schedules;
 using Service.Users;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +56,7 @@ builder.Services.AddJwtAuth(builder.Configuration);
 builder.Services.AddSingleton(builder.Configuration.GetSection("Lockout").Get<LockoutSettings>() ?? new LockoutSettings());
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<ScheduleService>();
 
 // OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -121,5 +123,6 @@ app.MapGet("/", (IClock clock) => $"Hello World, today is {clock.Today}")
 app.MapAuthEndpoints();
 app.MapMeEndpoints();
 app.MapUserEndpoints();
+app.MapEmployeeEndpoints();
 
 app.Run();

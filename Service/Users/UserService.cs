@@ -10,7 +10,23 @@ public record WorkWeek(
     TimeOnly? TuesdayStart, TimeOnly? TuesdayEnd,
     TimeOnly? WednesdayStart, TimeOnly? WednesdayEnd,
     TimeOnly? ThursdayStart, TimeOnly? ThursdayEnd,
-    TimeOnly? FridayStart, TimeOnly? FridayEnd);
+    TimeOnly? FridayStart, TimeOnly? FridayEnd)
+{
+    public WorkScheduleEntry ToSchedule(Guid employeeId, DateOnly validFrom) => new()
+    {
+        EmployeeId = employeeId,
+        ValidFrom = validFrom,
+        MondayStart = MondayStart, MondayEnd = MondayEnd,
+        TuesdayStart = TuesdayStart, TuesdayEnd = TuesdayEnd,
+        WednesdayStart = WednesdayStart, WednesdayEnd = WednesdayEnd,
+        ThursdayStart = ThursdayStart, ThursdayEnd = ThursdayEnd,
+        FridayStart = FridayStart, FridayEnd = FridayEnd
+    };
+
+    public static WorkWeek From(WorkScheduleEntry s) => new(
+        s.MondayStart, s.MondayEnd, s.TuesdayStart, s.TuesdayEnd, s.WednesdayStart, s.WednesdayEnd,
+        s.ThursdayStart, s.ThursdayEnd, s.FridayStart, s.FridayEnd);
+}
 
 public record NewEmployee(string Name, string Email, string Password, DateOnly HireDate, WorkWeek Schedule);
 
@@ -31,17 +47,7 @@ public class UserService(IUserRepository users, IPasswordHasher hasher)
 
         var employee = new Employee { Name = input.Name.Trim(), HireDate = input.HireDate };
 
-        var s = input.Schedule;
-        var schedule = new WorkScheduleEntry
-        {
-            EmployeeId = employee.Id,
-            ValidFrom = input.HireDate,
-            MondayStart = s.MondayStart, MondayEnd = s.MondayEnd,
-            TuesdayStart = s.TuesdayStart, TuesdayEnd = s.TuesdayEnd,
-            WednesdayStart = s.WednesdayStart, WednesdayEnd = s.WednesdayEnd,
-            ThursdayStart = s.ThursdayStart, ThursdayEnd = s.ThursdayEnd,
-            FridayStart = s.FridayStart, FridayEnd = s.FridayEnd
-        };
+        var schedule = input.Schedule.ToSchedule(employee.Id, input.HireDate);
 
         var accounts = new[]
         {
