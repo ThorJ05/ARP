@@ -7,7 +7,7 @@ using LinqToDB.EntityFrameworkCore;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Repositories;
 
-/// <summary>Employees, read and written with linq2db.</summary>
+// Employees, read and written with linq2db.
 public class EmployeeRepository(AppDbContext context) : IEmployeeRepository
 {
     public async Task<Employee?> GetByIdAsync(Guid id, CancellationToken ct = default)

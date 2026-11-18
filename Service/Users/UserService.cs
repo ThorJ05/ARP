@@ -11,14 +11,12 @@ public record CreateEmployeeResult(bool EmailTaken, Guid EmployeeId, Guid UserId
 
 public record CurrentUser(Guid UserId, string Email, Role Role, Guid? EmployeeId, string? EmployeeName);
 
-/// <summary>Logins: creating employees with a login, and who is logged in.</summary>
+// Logins: creating employees with a login, and who is logged in.
 public class UserService(IUserRepository users, IEmployeeRepository employees, IPasswordHasher hasher)
 {
-    /// <summary>
-    /// Creates an employee with a login, a work schedule from the hire date and both holiday accounts.
-    /// Every employee needs a schedule, otherwise we can't tell how many hours a day off costs.
-    /// Only the system owner may do this (checked by the API).
-    /// </summary>
+    // Creates an employee with a login, a work schedule from the hire date and both holiday accounts.
+    // Every employee needs a schedule, otherwise we can't tell how many hours a day off costs.
+    // Only the system owner may do this (checked by the API).
     public async Task<CreateEmployeeResult> CreateEmployeeAsync(NewEmployee input, CancellationToken ct = default)
     {
         var email = User.NormalizeEmail(input.Email);
@@ -40,7 +38,7 @@ public class UserService(IUserRepository users, IEmployeeRepository employees, I
         return new CreateEmployeeResult(false, employee.Id, login.Id);
     }
 
-    /// <summary>The logged-in user (null if the login was deleted after the token was made).</summary>
+    // The logged-in user (null if the login was deleted after the token was made).
     public async Task<CurrentUser?> GetCurrentUserAsync(Guid userId, CancellationToken ct = default)
     {
         var user = await users.GetByIdAsync(userId, ct);

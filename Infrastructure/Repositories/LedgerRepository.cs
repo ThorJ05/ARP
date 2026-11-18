@@ -4,49 +4,55 @@ using BusinessEsbjerg.Holiday.Service.Abstractions;
 using LinqToDB;
 using LinqToDB.Async;
 using LinqToDB.EntityFrameworkCore;
+using Npgsql;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Repositories;
 
-/// <summary>Holiday accounts and ledger entries, read with linq2db. The balance is the sum of the entries.</summary>
+// Holiday accounts and ledger entries, read and written with linq2db.
 public class LedgerRepository(AppDbContext context) : ILedgerRepository
 {
-    public async Task<IReadOnlyList<AccountBalance>> GetBalancesAsync(Guid employeeId, DateOnly? before = null,
+    public async Task<IReadOnlyList<HolidayAccount>> GetAccountsAsync(Guid? employeeId = null,
+        CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        return await db.GetTable<HolidayAccount>()
+            .Where(a => employeeId == null || a.EmployeeId == employeeId)
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<LedgerEntry>> GetEntriesAsync(Guid? employeeId = null,
         CancellationToken ct = default)
     {
         await using var db = context.CreateLinqToDBConnection();
 
-        var accounts = await db.GetTable<HolidayAccount>().Where(a => a.EmployeeId == employeeId).ToListAsync(ct);
-        var accountIds = accounts.Select(a => a.Id).ToList();
+        var accountIds = db.GetTable<HolidayAccount>()
+            .Where(a => employeeId == null || a.EmployeeId == employeeId)
+            .Select(a => a.Id);
 
-        var entries = db.GetTable<LedgerEntry>().Where(e => accountIds.Contains(e.AccountId));
-        if (before is { } day)
-            entries = entries.Where(e => e.Date < day);
-
-        return Combine(accounts, await SumPerAccountAsync(entries, ct));
+        return await db.GetTable<LedgerEntry>()
+            .Where(e => accountIds.Contains(e.AccountId))
+            .OrderBy(e => e.Date)
+            .ToListAsync(ct);
     }
 
-    public async Task<IReadOnlyList<AccountBalance>> GetAllBalancesAsync(CancellationToken ct = default)
+    public async Task<bool> AddEntriesAsync(IReadOnlyCollection<LedgerEntry> entries, CancellationToken ct = default)
     {
         await using var db = context.CreateLinqToDBConnection();
+        await using var transaction = await db.BeginTransactionAsync(ct);
 
-        var accounts = await db.GetTable<HolidayAccount>().ToListAsync(ct);
-        return Combine(accounts, await SumPerAccountAsync(db.GetTable<LedgerEntry>(), ct));
+        try
+        {
+            foreach (var entry in entries)
+                await db.InsertAsync(entry, token: ct);
+
+            await transaction.CommitAsync(ct);
+            return true;
+        }
+        catch (PostgresException e) when (e.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            // another request saved the same accrual first
+            await transaction.RollbackAsync(ct);
+            return false;
+        }
     }
-
-    private static async Task<Dictionary<Guid, decimal>> SumPerAccountAsync(IQueryable<LedgerEntry> entries,
-        CancellationToken ct)
-    {
-        var sums = await entries
-            .GroupBy(e => e.AccountId)
-            .Select(g => new { AccountId = g.Key, Hours = g.Sum(e => e.Hours) })
-            .ToListAsync(ct);
-        return sums.ToDictionary(s => s.AccountId, s => s.Hours);
-    }
-
-    // accounts without entries get a balance of 0
-    private static List<AccountBalance> Combine(IEnumerable<HolidayAccount> accounts, Dictionary<Guid, decimal> sums) =>
-        accounts
-            .OrderBy(a => a.Type)
-            .Select(a => new AccountBalance(a.EmployeeId, a.Id, a.Type, sums.GetValueOrDefault(a.Id)))
-            .ToList();
 }

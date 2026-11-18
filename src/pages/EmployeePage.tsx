@@ -1,92 +1,79 @@
-import { useEffect, useState } from "react";
-import type { BalanceResponse, MyRequestResponse, ScheduleResponse } from "../api/api";
+import { useCallback, useEffect, useState } from "react";
+import type { MyRequestResponse, ScheduleResponse } from "../api/api";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { BalancePanel } from "../components/balance";
+import { HolidayRequestForm } from "../components/HolidayRequestForm";
+import { MyRequests } from "../components/MyRequests";
 import { ScheduleTable } from "../components/schedule";
 import { errorMessage, isUnauthorized } from "../utils/errors";
 
-const accountLabels: Record<string, string> = {
-  Weeks1To5: "Weeks 1-5",
-  Week6: "Week 6",
-};
-
 export function EmployeePage() {
   const { session, logout } = useAuth();
-  const [balances, setBalances] = useState<BalanceResponse[] | null>(null);
   const [requests, setRequests] = useState<MyRequestResponse[] | null>(null);
   const [schedules, setSchedules] = useState<ScheduleResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const fail = useCallback(
+    (err: unknown) => (isUnauthorized(err) ? logout() : setError(errorMessage(err))),
+    [logout],
+  );
+
+  const loadBalances = useCallback(async (date?: string) => (await api.api.getMyBalances({ date })).data, []);
+
+  const loadRequests = useCallback(async () => {
+    try {
+      setRequests((await api.api.getMyRequests()).data);
+    } catch (err) {
+      fail(err);
+    }
+  }, [fail]);
+
   useEffect(() => {
-    Promise.all([api.api.getMyBalances(), api.api.getMyRequests(), api.api.getMySchedules()])
-      .then(([balanceResponse, requestResponse, scheduleResponse]) => {
-        setBalances(balanceResponse.data);
-        setRequests(requestResponse.data);
-        setSchedules(scheduleResponse.data);
-      })
-      .catch((err) => (isUnauthorized(err) ? logout() : setError(errorMessage(err))));
-  }, [logout]);
+    void loadRequests();
+    api.api
+      .getMySchedules()
+      .then(({ data }) => setSchedules(data))
+      .catch(fail);
+  }, [loadRequests, fail]);
+
+  async function cancel(request: MyRequestResponse) {
+    setError(null);
+    try {
+      await api.api.cancelRequest(request.id!);
+      await loadRequests();
+    } catch (err) {
+      fail(err);
+    }
+  }
 
   return (
     <>
       <section className="card">
         <h2>Hi {session?.me.employeeName}</h2>
         <h3>My holiday balance</h3>
-        {error && <p className="error">{error}</p>}
-        {!balances && !error && <p className="muted">Loading...</p>}
-        {balances && (
-          <table>
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th className="number">Hours</th>
-              </tr>
-            </thead>
-            <tbody>
-              {balances.map((b) => (
-                <tr key={b.account}>
-                  <td>{accountLabels[b.account ?? ""] ?? b.account}</td>
-                  <td className="number">{(b.hours ?? 0).toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <BalancePanel load={loadBalances} onUnauthorized={logout} />
+      </section>
+
+      <section className="card">
+        <h3>Request holiday</h3>
+        <HolidayRequestForm onSent={() => void loadRequests()} onUnauthorized={logout} />
+      </section>
+
+      <section className="card wide">
+        <h3>My holiday requests</h3>
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
         )}
+        {requests && <MyRequests requests={requests} onCancel={(r) => void cancel(r)} />}
       </section>
 
       <section className="card wide">
         <h3>My work schedule</h3>
         <p className="muted">Only accounting and the system owner can change your schedule.</p>
         {schedules && <ScheduleTable schedules={schedules} />}
-      </section>
-
-      <section className="card">
-        <h3>My holiday requests</h3>
-        {requests && requests.length === 0 && <p className="muted">No holiday requests yet.</p>}
-        {requests && requests.length > 0 && (
-          <table>
-            <thead>
-              <tr>
-                <th>From</th>
-                <th>To</th>
-                <th>Account</th>
-                <th className="number">Hours</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.startDate}</td>
-                  <td>{r.endDate}</td>
-                  <td>{accountLabels[r.account ?? ""] ?? r.account}</td>
-                  <td className="number">{(r.hours ?? 0).toFixed(2)}</td>
-                  <td>{r.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
       </section>
     </>
   );

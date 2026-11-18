@@ -5,11 +5,9 @@ using BusinessEsbjerg.Holiday.Service.Abstractions;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Auth;
 
-/// <summary>
-/// Salted PBKDF2 (HMAC-SHA512) using ASP.NET Core's PasswordHasher. Each password gets its own random salt,
-/// which is stored in the hash together with the settings. 210,000 iterations as OWASP recommends.
-/// Older hashes with fewer iterations still work and get upgraded the next time the user logs in.
-/// </summary>
+// Salted PBKDF2 (HMAC-SHA512) using ASP.NET Core's PasswordHasher. Each password gets its own random salt,
+// which is stored in the hash together with the settings. 210,000 iterations as OWASP recommends.
+// Older hashes with fewer iterations still work and get upgraded the next time the user logs in.
 public class Pbkdf2PasswordHasher : IPasswordHasher
 {
     public const int Iterations = 210_000;

@@ -2,6 +2,7 @@
 using BusinessEsbjerg.Holiday.Api.Validation;
 using BusinessEsbjerg.Holiday.Domain.Entities;
 using BusinessEsbjerg.Holiday.Service;
+using BusinessEsbjerg.Holiday.Service.Balances;
 using BusinessEsbjerg.Holiday.Service.Employees;
 using BusinessEsbjerg.Holiday.Service.Schedules;
 using BusinessEsbjerg.Holiday.Service.Users;
@@ -72,6 +73,11 @@ public static class EmployeeEndpoints
             .WithName("CreateEmployee")
             .WithSummary("Create an employee with a login and a work schedule (system owner only)");
 
+        group.MapGet("/{id:guid}/balances", GetBalances)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .WithName("GetEmployeeBalances")
+            .WithSummary("An employee's balances with expiry dates, today or on a future date (accountant and system owner)");
+
         group.MapGet("/{id:guid}/schedules", GetHistory)
             .WithName("GetScheduleHistory")
             .WithSummary("The full work schedule history of an employee (accountant and system owner)");
@@ -112,6 +118,10 @@ public static class EmployeeEndpoints
         if (history is null) return TypedResults.NotFound();
         return TypedResults.Ok(history.Select(ScheduleResponse.From).ToList());
     }
+
+    private static Task<Results<Ok<List<BalanceResponse>>, NotFound, ProblemHttpResult>> GetBalances(
+        Guid id, DateOnly? date, BalanceService balances, CancellationToken ct) =>
+        BalanceResults.GetAsync(balances, id, date, ct);
 
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> AddSchedule(
         Guid id, NewScheduleRequest request, ScheduleService schedules, CancellationToken ct) =>

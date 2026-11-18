@@ -1,18 +1,16 @@
 ﻿namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
-/// <summary>
-/// Weekly schedule (Monday-Friday) with a start and end time for each day. A day without times is a day off.
-/// A schedule is used from ValidFrom until the next one starts, so when the hours change we add a new
-/// entry instead of editing the old one. That way we keep the history.
-/// Only accounting and the system owner can change schedules.
-/// </summary>
+// Weekly schedule (Monday-Friday) with a start and end time for each day. A day without times is a day off.
+// A schedule is used from ValidFrom until the next one starts, so when the hours change we add a new
+// entry instead of editing the old one. That way we keep the history.
+// Only accounting and the system owner can change schedules.
 public class WorkScheduleEntry
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
     public Guid EmployeeId { get; set; }
     public Employee Employee { get; set; } = null!;
 
-    /// <summary>The date the schedule starts.</summary>
+    // The date the schedule starts.
     public DateOnly ValidFrom { get; set; }
 
     public TimeOnly? MondayStart { get; set; }
@@ -35,10 +33,10 @@ public class WorkScheduleEntry
 
     public int WorkingDays => WorkWeek.Count(day => GetHours(day) > 0m);
 
-    /// <summary>Average hours per working day, e.g. 37 / 5 = 7.4 for full time. Used to convert between days and hours.</summary>
+    // Average hours per working day, e.g. 37 / 5 = 7.4 for full time. Used to convert between days and hours.
     public decimal AverageDayHours => WorkingDays == 0 ? 0m : Math.Round(WeeklyHours / WorkingDays, 2);
 
-    /// <summary>Hours on a given weekday. Weekends always return 0.</summary>
+    // Hours on a given weekday. Weekends always return 0.
     public decimal GetHours(DayOfWeek day) => day switch
     {
         DayOfWeek.Monday => Duration(MondayStart, MondayEnd),
@@ -49,10 +47,8 @@ public class WorkScheduleEntry
         _ => 0m
     };
 
-    /// <summary>
-    /// Converts the balance when the schedule changes, so the employee keeps the same number of days.
-    /// Example: 74 h on full time (7.4 h/day) is 10 days, which is 75 h on a 7.5 h/day part-time schedule.
-    /// </summary>
+    // Converts the balance when the schedule changes, so the employee keeps the same number of days.
+    // Example: 74 h on full time (7.4 h/day) is 10 days, which is 75 h on a 7.5 h/day part-time schedule.
     public static decimal ConvertBalance(decimal hours, WorkScheduleEntry from, WorkScheduleEntry to)
     {
         if (from.AverageDayHours == 0m)

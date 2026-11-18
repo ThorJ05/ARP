@@ -10,4 +10,7 @@ export const API_URL =
 export const api = new Api<string>({
     baseUrl: API_URL,
     securityWorker: (token) => (token ? {headers: {Authorization: `Bearer ${token}`}} : {}),
+    // read every response as JSON, otherwise errors from endpoints that return nothing on success
+    // (like "add schedule") only show "Something went wrong"
+    baseApiParams: {format: "json"},
 });

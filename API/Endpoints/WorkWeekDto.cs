@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace BusinessEsbjerg.Holiday.Api.Endpoints;
 
-/// <summary>Monday-Friday start and end times as sent over the API. A day without times is a day off.</summary>
+// Monday-Friday start and end times as sent over the API. A day without times is a day off.
 public record WorkWeekDto(
     TimeOnly? MondayStart, TimeOnly? MondayEnd,
     TimeOnly? TuesdayStart, TimeOnly? TuesdayEnd,

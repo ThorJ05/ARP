@@ -7,7 +7,7 @@ using LinqToDB.EntityFrameworkCore;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Repositories;
 
-/// <summary>Logins, read and written with linq2db.</summary>
+// Logins, read and written with linq2db.
 public class UserRepository(AppDbContext context) : IUserRepository
 {
     public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)

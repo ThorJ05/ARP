@@ -3,17 +3,15 @@ using BusinessEsbjerg.Holiday.Service.Abstractions;
 
 namespace BusinessEsbjerg.Holiday.Service.Auth;
 
-/// <summary>FailReason is only for the log, the caller always gets the same message.</summary>
+// FailReason is only for the log, the caller always gets the same message.
 public record LoginResult(bool Succeeded, AuthToken? Token, string? FailReason)
 {
     public static LoginResult Failed(string reason) => new(false, null, reason);
 }
 
-/// <summary>
-/// Login with email and password. After too many failed logins in a row the account is locked for a while,
-/// and while it's locked we don't even check the password. The answer is the same for a wrong password,
-/// an unknown email and a locked account, so you can't use the login to find out which emails exist.
-/// </summary>
+// Login with email and password. After too many failed logins in a row the account is locked for a while,
+// and while it's locked we don't even check the password. The answer is the same for a wrong password,
+// an unknown email and a locked account, so you can't use the login to find out which emails exist.
 public class AuthService(
     IUserRepository users, IPasswordHasher hasher, ITokenService tokens, IClock clock, LockoutSettings lockout)
 {
@@ -21,33 +19,14 @@ public class AuthService(
     {
         var user = await users.GetByEmailAsync(User.NormalizeEmail(email), ct);
         if (user is null)
-        {
-            // hash anyway so an unknown email takes as long as a wrong password
-            hasher.Hash(new User(), password);
-            return LoginResult.Failed("unknown email");
-        }
+            return FailWithoutCheck(password, "unknown email");
 
-        var now = clock.UtcNow;
-        if (user.IsLockedOut(now))
-        {
-            hasher.Hash(new User(), password); // same time as a wrong password, so the answer doesn't show the lock
-            return LoginResult.Failed("account is locked");
-        }
+        if (user.IsLockedOut(clock.UtcNow))
+            return FailWithoutCheck(password, "account is locked");
 
         var check = hasher.Verify(user, password);
         if (check == PasswordCheck.Failed)
-        {
-            user.FailedLoginCount++;
-            var locked = user.FailedLoginCount >= lockout.MaxFailedAttempts;
-            if (locked)
-            {
-                user.LockoutEndUtc = now.AddMinutes(lockout.LockoutMinutes);
-                user.FailedLoginCount = 0;
-            }
-
-            await users.UpdateLoginStateAsync(user, ct);
-            return LoginResult.Failed(locked ? "wrong password, account locked" : "wrong password");
-        }
+            return await WrongPasswordAsync(user, ct);
 
         user.FailedLoginCount = 0;
         user.LockoutEndUtc = null;
@@ -56,5 +35,27 @@ public class AuthService(
 
         await users.UpdateLoginStateAsync(user, ct);
         return new LoginResult(true, tokens.CreateToken(user), null);
+    }
+
+    // hash anyway, so an unknown email or a locked account takes as long as a wrong password
+    private LoginResult FailWithoutCheck(string password, string reason)
+    {
+        hasher.Hash(new User(), password);
+        return LoginResult.Failed(reason);
+    }
+
+    // counts the failed login and locks the account after too many in a row
+    private async Task<LoginResult> WrongPasswordAsync(User user, CancellationToken ct)
+    {
+        user.FailedLoginCount++;
+        var locked = user.FailedLoginCount >= lockout.MaxFailedAttempts;
+        if (locked)
+        {
+            user.LockoutEndUtc = clock.UtcNow.AddMinutes(lockout.LockoutMinutes);
+            user.FailedLoginCount = 0;
+        }
+
+        await users.UpdateLoginStateAsync(user, ct);
+        return LoginResult.Failed(locked ? "wrong password, account locked" : "wrong password");
     }
 }

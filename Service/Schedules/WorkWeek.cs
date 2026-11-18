@@ -2,7 +2,7 @@
 
 namespace BusinessEsbjerg.Holiday.Service.Schedules;
 
-/// <summary>Monday-Friday start and end times. A day without times is a day off.</summary>
+// Monday-Friday start and end times. A day without times is a day off.
 public record WorkWeek(
     TimeOnly? MondayStart, TimeOnly? MondayEnd,
     TimeOnly? TuesdayStart, TimeOnly? TuesdayEnd,

@@ -73,7 +73,6 @@ public class HolidayAccountConfiguration : IEntityTypeConfiguration<HolidayAccou
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever(); // Guid is created in the entity, not by the database
         b.Property(x => x.Type).HasConversion<string>().HasMaxLength(20);
-        b.Ignore(x => x.BalanceHours);
         b.HasMany(x => x.Entries).WithOne(x => x.Account).HasForeignKey(x => x.AccountId);
 
         // Exactly one account of each type per employee

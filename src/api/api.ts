@@ -48,8 +48,32 @@ export interface MeResponse {
 
 export interface BalanceResponse {
   account?: string;
+  /** @format date */
+  date?: string;
+  /** @format decimal */
+  dayHours?: number;
   /** @format decimal */
   hours?: number;
+  /** @format decimal */
+  days?: number;
+  /** @format decimal */
+  availableHours?: number;
+  /** @format decimal */
+  availableDays?: number;
+  /** @format decimal */
+  expiredHours?: number;
+  buckets?: BalanceBucketResponse[];
+}
+
+export interface BalanceBucketResponse {
+  /** @format date */
+  availableFrom?: string;
+  /** @format date */
+  expiresOn?: string;
+  /** @format decimal */
+  hours?: number;
+  /** @format decimal */
+  days?: number;
 }
 
 export interface MyRequestResponse {
@@ -67,6 +91,7 @@ export interface MyRequestResponse {
   decisionReason?: string | null;
   /** @format date-time */
   createdAtUtc?: string;
+  canCancel?: boolean;
 }
 
 export interface ScheduleResponse {
@@ -148,6 +173,30 @@ export interface NewScheduleRequest {
 export interface TerminationRequest {
   /** @format date */
   terminationDate?: string | null;
+}
+
+export interface HolidayRequestDto {
+  account?: string;
+  /** @format date */
+  startDate?: string;
+  /** @format date */
+  endDate?: string;
+  comment?: string | null;
+}
+
+export interface RequestCheckResponse {
+  /** @format decimal */
+  hours?: number;
+  /** @format int32 */
+  workingDays?: number;
+  errors?: string[];
+}
+
+export interface CreatedRequestResponse {
+  /** @format guid */
+  id?: string;
+  /** @format decimal */
+  hours?: number;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -413,20 +462,6 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
-  /**
-   * No description
-   *
-   * @name GetHello
-   * @request GET:/
-   */
-  getHello = (params: RequestParams = {}) =>
-    this.request<string, any>({
-      path: `/`,
-      method: "GET",
-      format: "json",
-      ...params,
-    });
-
   api = {
     /**
      * No description
@@ -473,9 +508,33 @@ export class Api<
      * @request GET:/api/me/balances
      * @secure
      */
-    getMyBalances: (params: RequestParams = {}) =>
-      this.request<BalanceResponse[], any>({
+    getMyBalances: (
+      query?: {
+        /** @format date */
+        date?: string | null;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<BalanceResponse[], ProblemDetails | void>({
         path: `/api/me/balances`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Me
+     * @name GetMySchedules
+     * @request GET:/api/me/schedules
+     * @secure
+     */
+    getMySchedules: (params: RequestParams = {}) =>
+      this.request<ScheduleResponse[], any>({
+        path: `/api/me/schedules`,
         method: "GET",
         secure: true,
         format: "json",
@@ -503,16 +562,55 @@ export class Api<
      * No description
      *
      * @tags Me
-     * @name GetMySchedules
-     * @request GET:/api/me/schedules
+     * @name CreateRequest
+     * @request POST:/api/me/requests
      * @secure
      */
-    getMySchedules: (params: RequestParams = {}) =>
-      this.request<ScheduleResponse[], any>({
-        path: `/api/me/schedules`,
-        method: "GET",
+    createRequest: (data: HolidayRequestDto, params: RequestParams = {}) =>
+      this.request<CreatedRequestResponse, HttpValidationProblemDetails | void>(
+        {
+          path: `/api/me/requests`,
+          method: "POST",
+          body: data,
+          secure: true,
+          type: ContentType.Json,
+          format: "json",
+          ...params,
+        },
+      ),
+
+    /**
+     * No description
+     *
+     * @tags Me
+     * @name PreviewRequest
+     * @request POST:/api/me/requests/preview
+     * @secure
+     */
+    previewRequest: (data: HolidayRequestDto, params: RequestParams = {}) =>
+      this.request<RequestCheckResponse, HttpValidationProblemDetails | void>({
+        path: `/api/me/requests/preview`,
+        method: "POST",
+        body: data,
         secure: true,
+        type: ContentType.Json,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Me
+     * @name CancelRequest
+     * @request POST:/api/me/requests/{id}/cancel
+     * @secure
+     */
+    cancelRequest: (id: string, params: RequestParams = {}) =>
+      this.request<void, ProblemDetails | void>({
+        path: `/api/me/requests/${id}/cancel`,
+        method: "POST",
+        secure: true,
         ...params,
       }),
 
@@ -551,6 +649,31 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Employees
+     * @name GetEmployeeBalances
+     * @request GET:/api/employees/{id}/balances
+     * @secure
+     */
+    getEmployeeBalances: (
+      id: string,
+      query?: {
+        /** @format date */
+        date?: string | null;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<BalanceResponse[], ProblemDetails | void>({
+        path: `/api/employees/${id}/balances`,
+        method: "GET",
+        query: query,
+        secure: true,
         format: "json",
         ...params,
       }),

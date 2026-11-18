@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { EmployeeResponse, ScheduleResponse } from "../api/api";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { errorMessage, isUnauthorized } from "../utils/errors";
-import { fromWorkWeek, fullTime, ScheduleFields, ScheduleTable, toWorkWeek, type DayTimes } from "./schedule";
+import { BalancePanel } from "./balance";
+import { EmployeeTable } from "./EmployeeTable";
+import { EndDateForm } from "./EndDateForm";
+import { NewScheduleForm } from "./NewScheduleForm";
+import { fromWorkWeek, fullTime, ScheduleTable, toWorkWeek } from "./schedule";
 
 interface Props {
   /** Only the system owner can set an end date. */
@@ -12,17 +16,12 @@ interface Props {
   refreshKey?: number;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
-
-/** List of employees, their schedule history, a new schedule and (for the system owner) the end date. */
+/** The employee list. The open employee shows balance, schedule history, a new schedule and the end date. */
 export function EmployeeAdmin({ canSetEndDate, refreshKey = 0 }: Props) {
   const { logout } = useAuth();
   const [employees, setEmployees] = useState<EmployeeResponse[] | null>(null);
   const [selected, setSelected] = useState<EmployeeResponse | null>(null);
   const [history, setHistory] = useState<ScheduleResponse[] | null>(null);
-  const [validFrom, setValidFrom] = useState(today());
-  const [times, setTimes] = useState<DayTimes>(fullTime);
-  const [endDate, setEndDate] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,17 +41,13 @@ export function EmployeeAdmin({ canSetEndDate, refreshKey = 0 }: Props) {
     }
   }, [fail]);
 
-  const select = useCallback(
+  const open = useCallback(
     async (employee: EmployeeResponse) => {
       setSelected(employee);
       setMessage(null);
       setError(null);
-      setEndDate(employee.terminationDate ?? "");
       try {
-        const { data } = await api.api.getScheduleHistory(employee.id!);
-        setHistory(data);
-        // start the new schedule from the one in use, so only the changes need typing
-        setTimes(data.length > 0 ? fromWorkWeek(data[data.length - 1]!.week) : fullTime);
+        setHistory((await api.api.getScheduleHistory(employee.id!)).data);
       } catch (err) {
         fail(err);
       }
@@ -60,38 +55,31 @@ export function EmployeeAdmin({ canSetEndDate, refreshKey = 0 }: Props) {
     [fail],
   );
 
+  const loadBalances = useCallback(
+    async (date?: string) => (selected ? (await api.api.getEmployeeBalances(selected.id!, { date })).data : []),
+    [selected],
+  );
+
+  // a new schedule starts from the one in use
+  const currentTimes = useMemo(
+    () => (history && history.length > 0 ? fromWorkWeek(history[history.length - 1]!.week) : fullTime),
+    [history],
+  );
+
   useEffect(() => {
     void loadEmployees();
   }, [loadEmployees, refreshKey]);
 
-  // reload the list and the selected employee after a change
-  async function reload(message: string) {
-    const list = await loadEmployees();
-    const again = list?.find((e) => e.id === selected?.id);
-    if (again) await select(again);
-    setMessage(message);
-  }
-
-  async function addSchedule(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // saves a change, then reloads the list and the open employee
+  async function change(save: (id: string) => Promise<unknown>, done: string) {
     if (!selected) return;
     setMessage(null);
     setError(null);
     try {
-      await api.api.addSchedule(selected.id!, { validFrom, schedule: toWorkWeek(times) });
-      await reload(`New schedule from ${validFrom} saved.`);
-    } catch (err) {
-      fail(err);
-    }
-  }
-
-  async function saveEndDate(date: string | null) {
-    if (!selected) return;
-    setMessage(null);
-    setError(null);
-    try {
-      await api.api.setTerminationDate(selected.id!, { terminationDate: date });
-      await reload(date ? `End date set to ${date}.` : "End date removed.");
+      await save(selected.id!);
+      const again = (await loadEmployees())?.find((e) => e.id === selected.id);
+      if (again) await open(again);
+      setMessage(done);
     } catch (err) {
       fail(err);
     }
@@ -102,40 +90,7 @@ export function EmployeeAdmin({ canSetEndDate, refreshKey = 0 }: Props) {
       <section className="card wide">
         <h2>Employees</h2>
         {!employees && !error && <p className="muted">Loading...</p>}
-        {employees && (
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Hired</th>
-                <th>Left</th>
-                <th className="number">Hours/week</th>
-                <th className="number">Weeks 1-5</th>
-                <th className="number">Week 6</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {employees.map((e) => (
-                <tr key={e.id} className={e.id === selected?.id ? "current" : undefined}>
-                  <td>{e.name}</td>
-                  <td>{e.email}</td>
-                  <td>{e.hireDate}</td>
-                  <td>{e.terminationDate ?? ""}</td>
-                  <td className="number">{e.currentWeeklyHours?.toFixed(2) ?? "-"}</td>
-                  <td className="number">{(e.weeks1To5Hours ?? 0).toFixed(2)}</td>
-                  <td className="number">{(e.week6Hours ?? 0).toFixed(2)}</td>
-                  <td>
-                    <button type="button" onClick={() => void select(e)}>
-                      Schedule
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        {employees && <EmployeeTable employees={employees} selectedId={selected?.id} onOpen={(e) => void open(e)} />}
       </section>
 
       {selected && (
@@ -148,40 +103,32 @@ export function EmployeeAdmin({ canSetEndDate, refreshKey = 0 }: Props) {
           )}
           {message && <p className="success">{message}</p>}
 
+          <h3>Holiday balance</h3>
+          <BalancePanel load={loadBalances} onUnauthorized={logout} />
+
           <h3>Work schedule history</h3>
           {history && <ScheduleTable schedules={history} />}
 
-          <form className="form" onSubmit={addSchedule}>
-            <h3>New schedule</h3>
-            <p className="muted">
-              Old schedules are never changed. The remaining balance is converted so the number of days stays the same.
-            </p>
-            <label>
-              Used from
-              <input type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} required />
-            </label>
-            <ScheduleFields times={times} onChange={setTimes} />
-            <button type="submit">Save new schedule</button>
-          </form>
+          <NewScheduleForm
+            start={currentTimes}
+            onSave={(validFrom, times) =>
+              change(
+                (id) => api.api.addSchedule(id, { validFrom, schedule: toWorkWeek(times) }),
+                `New schedule from ${validFrom} saved.`,
+              )
+            }
+          />
 
           {canSetEndDate && (
-            <div className="form">
-              <h3>End date</h3>
-              <label>
-                Last day of employment
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-              </label>
-              <div className="buttons">
-                <button type="button" disabled={!endDate} onClick={() => void saveEndDate(endDate)}>
-                  Save end date
-                </button>
-                {selected.terminationDate && (
-                  <button type="button" onClick={() => void saveEndDate(null)}>
-                    Remove end date
-                  </button>
-                )}
-              </div>
-            </div>
+            <EndDateForm
+              current={selected.terminationDate}
+              onSave={(date) =>
+                change(
+                  (id) => api.api.setTerminationDate(id, { terminationDate: date }),
+                  date ? `End date set to ${date}.` : "End date removed.",
+                )
+              }
+            />
           )}
         </section>
       )}
