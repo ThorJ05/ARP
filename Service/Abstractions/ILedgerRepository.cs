@@ -1,15 +1,18 @@
-﻿using BusinessEsbjerg.Holiday.Domain.Enums;
+﻿using BusinessEsbjerg.Holiday.Domain.Entities;
 
 namespace BusinessEsbjerg.Holiday.Service.Abstractions;
 
-public record AccountBalance(Guid EmployeeId, Guid AccountId, AccountType Type, decimal Hours);
-
-/// <summary>Holiday accounts and their ledger entries (the balance is the sum of the entries).</summary>
+// Holiday accounts and their ledger entries (the balance is calculated from the entries).
 public interface ILedgerRepository
 {
-    /// <summary>Balance per account for one employee. With "before" only entries dated before that day count.</summary>
-    Task<IReadOnlyList<AccountBalance>> GetBalancesAsync(Guid employeeId, DateOnly? before = null,
-        CancellationToken ct = default);
+    // The accounts of one employee, or of everyone when employeeId is null.
+    Task<IReadOnlyList<HolidayAccount>> GetAccountsAsync(Guid? employeeId = null, CancellationToken ct = default);
 
-    Task<IReadOnlyList<AccountBalance>> GetAllBalancesAsync(CancellationToken ct = default);
+    // The ledger entries of one employee, or of everyone when employeeId is null.
+    
+    Task<IReadOnlyList<LedgerEntry>> GetEntriesAsync(Guid? employeeId = null, CancellationToken ct = default);
+
+    // Saves new entries in one transaction. If another request saved the same accrual at the same time,
+    // nothing is saved and false is returned (the unique index stops duplicates).
+    Task<bool> AddEntriesAsync(IReadOnlyCollection<LedgerEntry> entries, CancellationToken ct = default);
 }

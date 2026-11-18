@@ -8,10 +8,8 @@ using LinqToDB.EntityFrameworkCore;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
 
-/// <summary>
-/// Inserts the rule values (always) and test data (development only). Safe to run multiple times.
-/// All test users share the password "Test1234!" (development only).
-/// </summary>
+// Inserts the rule values (always) and test data (development only). Safe to run multiple times.
+// All test users share the password "Test1234!" (development only).
 public class DbSeeder(AppDbContext context, IPasswordHasher hasher)
 {
     private const string EmailDomain = "@businessesbjerg.com";

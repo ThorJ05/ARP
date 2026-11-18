@@ -1,17 +1,10 @@
 ﻿using System.Security.Claims;
 using BusinessEsbjerg.Holiday.Api.Auth;
-using BusinessEsbjerg.Holiday.Service.Employees;
-using BusinessEsbjerg.Holiday.Service.Requests;
+using BusinessEsbjerg.Holiday.Service.Balances;
 using BusinessEsbjerg.Holiday.Service.Schedules;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace BusinessEsbjerg.Holiday.Api.Endpoints;
-
-public record BalanceResponse(string Account, decimal Hours);
-
-public record MyRequestResponse(
-    Guid Id, string Account, DateOnly StartDate, DateOnly EndDate, decimal Hours,
-    string Status, string? Comment, string? DecisionReason, DateTime CreatedAtUtc);
 
 public static class MeEndpoints
 {
@@ -22,12 +15,9 @@ public static class MeEndpoints
         var group = app.MapGroup("/api/me").WithTags("Me").RequireAuthorization(Policies.Employee);
 
         group.MapGet("/balances", GetMyBalances)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithName("GetMyBalances")
-            .WithSummary("My holiday balances in hours (weeks 1-5 and week 6)");
-
-        group.MapGet("/requests", GetMyRequests)
-            .WithName("GetMyRequests")
-            .WithSummary("My holiday requests");
+            .WithSummary("My holiday balances in hours and days with expiry dates, today or on a future date");
 
         // read only: there is no endpoint where employees can change their own schedule
         group.MapGet("/schedules", GetMySchedules)
@@ -35,21 +25,9 @@ public static class MeEndpoints
             .WithSummary("My work schedule history");
     }
 
-    private static async Task<Ok<List<BalanceResponse>>> GetMyBalances(
-        ClaimsPrincipal principal, EmployeeService employees, CancellationToken ct)
-    {
-        var balances = await employees.GetBalancesAsync(principal.GetEmployeeId()!.Value, ct);
-        return TypedResults.Ok(balances.Select(b => new BalanceResponse(b.Type.ToString(), b.Hours)).ToList());
-    }
-
-    private static async Task<Ok<List<MyRequestResponse>>> GetMyRequests(
-        ClaimsPrincipal principal, HolidayRequestService requests, CancellationToken ct)
-    {
-        var mine = await requests.GetForEmployeeAsync(principal.GetEmployeeId()!.Value, ct);
-        return TypedResults.Ok(mine.Select(r => new MyRequestResponse(
-            r.Id, r.AccountType.ToString(), r.StartDate, r.EndDate, r.Hours,
-            r.Status.ToString(), r.Comment, r.DecisionReason, r.CreatedAtUtc)).ToList());
-    }
+    private static Task<Results<Ok<List<BalanceResponse>>, NotFound, ProblemHttpResult>> GetMyBalances(
+        ClaimsPrincipal principal, BalanceService balances, DateOnly? date, CancellationToken ct) =>
+        BalanceResults.GetAsync(balances, principal.GetEmployeeId()!.Value, date, ct);
 
     private static async Task<Ok<List<ScheduleResponse>>> GetMySchedules(
         ClaimsPrincipal principal, ScheduleService schedules, CancellationToken ct)

@@ -39,6 +39,18 @@ bun run generate:api
 Commit the updated `src/api/api.ts` in the same pull request as the backend change
 (new or changed endpoints and DTOs).
 
+## Tests
+
+Run all tests with `dotnet test ARP.slnx` (GitHub Actions runs the same command on every pull request).
+
+- **Unit tests** (`Tests/Unit`): the holiday rules, which are plain code without a database:
+  monthly accrual (full time, part time, start or end in the middle of a month, a new schedule in the
+  middle of a month, a rule change from a date), expiry dates, which holiday is used first, week 6 not
+  being usable before 1 May, conversion when the schedule changes, and what a holiday day costs.
+  Holiday requests: weekends and Danish public holidays are free, notice periods, the main holiday window,
+  at most 5 days of holiday debt, a balance of 0 or more on 31 August, week 6 only when usable, overlapping
+  requests and cancelling.
+
 ## Security
 
 ### Login
@@ -72,9 +84,11 @@ Every endpoint needs a valid token unless it is marked as public.
 | Health check and Swagger | Yes | Yes | Yes | Yes |
 | Log in (`POST /api/auth/login`) | Yes | Yes | Yes | Yes |
 | Own login info (`GET /api/auth/me`) | No | Yes | Yes | Yes |
-| Own balances and requests (`GET /api/me/balances`, `GET /api/me/requests`) | No | Only their own | No | No |
+| Own balances, also on a future date (`GET /api/me/balances?date=`) | No | Only their own | No | No |
+| Own holiday requests: see, check the cost, send, withdraw or ask to cancel (`/api/me/requests`) | No | Only their own | No | No |
 | Create employees with a login and work schedule (`POST /api/employees`) | No | No | No | Yes |
 | See all employees and their schedule history (`GET /api/employees`, `GET /api/employees/{id}/schedules`) | No | No | Yes | Yes |
+| See an employee's balances with expiry dates (`GET /api/employees/{id}/balances?date=`) | No | No | Yes | Yes |
 | Give an employee a new work schedule (`POST /api/employees/{id}/schedules`) | No | No | Yes | Yes |
 | Set an employee's end date (`PUT /api/employees/{id}/termination`) | No | No | No | Yes |
 | Own work schedule, read only (`GET /api/me/schedules`) | No | Only their own | No | No |

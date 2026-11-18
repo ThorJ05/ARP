@@ -1,9 +1,7 @@
 ﻿namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
-/// <summary>
-/// A rule value with a start date. When a value changes we add a new row with a later date,
-/// so old calculations still use the old value.
-/// </summary>
+// A rule value with a start date. When a value changes we add a new row with a later date,
+// so old calculations still use the old value.
 public class RuleParameter
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();

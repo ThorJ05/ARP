@@ -7,7 +7,7 @@ using LinqToDB.EntityFrameworkCore;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Repositories;
 
-/// <summary>Work schedules, read and written with linq2db.</summary>
+// Work schedules, read and written with linq2db.
 public class ScheduleRepository(AppDbContext context) : IScheduleRepository
 {
     public async Task<IReadOnlyList<WorkScheduleEntry>> GetForEmployeeAsync(Guid employeeId, CancellationToken ct = default)
@@ -25,16 +25,9 @@ public class ScheduleRepository(AppDbContext context) : IScheduleRepository
         return await db.GetTable<WorkScheduleEntry>().ToListAsync(ct);
     }
 
-    public async Task AddAsync(WorkScheduleEntry schedule, IEnumerable<LedgerEntry> conversions,
-        CancellationToken ct = default)
+    public async Task AddAsync(WorkScheduleEntry schedule, CancellationToken ct = default)
     {
         await using var db = context.CreateLinqToDBConnection();
-        await using var transaction = await db.BeginTransactionAsync(ct);
-
         await db.InsertAsync(schedule, token: ct);
-        foreach (var entry in conversions)
-            await db.InsertAsync(entry, token: ct);
-
-        await transaction.CommitAsync(ct);
     }
 }

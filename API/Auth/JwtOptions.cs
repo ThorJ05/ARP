@@ -12,7 +12,7 @@ public class JwtOptions
     [Required]
     public string Audience { get; set; } = "";
 
-    /// <summary>Key used to sign tokens. For the deployed system it's set with fly secrets, never in git.</summary>
+    // Key used to sign tokens. For the deployed system it's set with fly secrets, never in git.
     [Required, MinLength(32)]
     public string Key { get; set; } = "";
 

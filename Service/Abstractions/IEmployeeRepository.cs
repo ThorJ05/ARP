@@ -2,16 +2,16 @@
 
 namespace BusinessEsbjerg.Holiday.Service.Abstractions;
 
-/// <summary>An employee and the email of their login.</summary>
+// An employee and the email of their login.
 public record EmployeeWithEmail(Employee Employee, string? Email);
 
-/// <summary>Employees.</summary>
+// Employees.
 public interface IEmployeeRepository
 {
     Task<Employee?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<EmployeeWithEmail>> GetAllAsync(CancellationToken ct = default);
 
-    /// <summary>Saves a new employee with work schedule, holiday accounts and login in one transaction.</summary>
+    // Saves a new employee with work schedule, holiday accounts and login in one transaction.
     Task CreateAsync(Employee employee, WorkScheduleEntry schedule, IEnumerable<HolidayAccount> accounts, User login,
         CancellationToken ct = default);
 

@@ -3,12 +3,10 @@ using LinqToDB.Mapping;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
 
-/// <summary>
-/// Extra Linq2db mapping on top of the EF Core model.
-/// Linq2db reads tables and columns from the EF Core model, but it also treats every other
-/// public value property as a column. Calculated properties must therefore be excluded here,
-/// in addition to the Ignore() calls in EntityConfigurations.
-/// </summary>
+// Extra Linq2db mapping on top of the EF Core model.
+// Linq2db reads tables and columns from the EF Core model, but it also treats every other
+// public value property as a column. Calculated properties must therefore be excluded here,
+// in addition to the Ignore() calls in EntityConfigurations.
 public static class LinqToDbMapping
 {
     public static readonly MappingSchema Schema = Build();
@@ -20,7 +18,6 @@ public static class LinqToDbMapping
         builder.Entity<WorkScheduleEntry>().Ignore(x => x.WeeklyHours);
         builder.Entity<WorkScheduleEntry>().Ignore(x => x.WorkingDays);
         builder.Entity<WorkScheduleEntry>().Ignore(x => x.AverageDayHours);
-        builder.Entity<HolidayAccount>().Ignore(x => x.BalanceHours);
 
         builder.Build();
         return builder.MappingSchema;

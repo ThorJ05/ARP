@@ -17,11 +17,14 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 
+        
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
         services.AddScoped<ILedgerRepository, LedgerRepository>();
         services.AddScoped<IHolidayRequestRepository, HolidayRequestRepository>();
+        services.AddScoped<IRuleRepository, RuleRepository>();
+        services.AddScoped<ICompanyDayOffRepository, CompanyDayOffRepository>();
 
         services.AddScoped<DbSeeder>();
         services.AddScoped<AccountBootstrapper>();

@@ -1,6 +1,6 @@
 ﻿namespace BusinessEsbjerg.Holiday.Api.Auth;
 
-/// <summary>Names of the authorization policies. See the access matrix in README.md.</summary>
+// Names of the authorization policies. See the access matrix in README.md.
 public static class Policies
 {
     public const string Employee = "Employee";
@@ -9,7 +9,7 @@ public static class Policies
     public const string AccountantOrSystemOwner = "AccountantOrSystemOwner";
 }
 
-/// <summary>Our own claim names in the token.</summary>
+// Our own claim names in the token.
 public static class AuthClaims
 {
     public const string Role = "role";
