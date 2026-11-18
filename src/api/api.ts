@@ -69,23 +69,21 @@ export interface MyRequestResponse {
   createdAtUtc?: string;
 }
 
-export interface CreatedEmployeeResponse {
+export interface ScheduleResponse {
   /** @format guid */
-  employeeId?: string;
-  /** @format guid */
-  userId?: string;
-}
-
-export interface CreateEmployeeRequest {
-  name?: string;
-  email?: string;
-  password?: string;
+  id?: string;
   /** @format date */
-  hireDate?: string;
-  schedule?: WorkWeek;
+  validFrom?: string;
+  /** @format date */
+  validTo?: string | null;
+  week?: WorkWeekDto;
+  /** @format decimal */
+  weeklyHours?: number;
+  /** @format decimal */
+  averageDayHours?: number;
 }
 
-export interface WorkWeek {
+export interface WorkWeekDto {
   /** @format time */
   mondayStart?: string | null;
   /** @format time */
@@ -106,6 +104,50 @@ export interface WorkWeek {
   fridayStart?: string | null;
   /** @format time */
   fridayEnd?: string | null;
+}
+
+export interface EmployeeResponse {
+  /** @format guid */
+  id?: string;
+  name?: string;
+  email?: string | null;
+  /** @format date */
+  hireDate?: string;
+  /** @format date */
+  terminationDate?: string | null;
+  /** @format decimal */
+  currentWeeklyHours?: number | null;
+  /** @format decimal */
+  weeks1To5Hours?: number;
+  /** @format decimal */
+  week6Hours?: number;
+}
+
+export interface CreatedEmployeeResponse {
+  /** @format guid */
+  employeeId?: string;
+  /** @format guid */
+  userId?: string;
+}
+
+export interface CreateEmployeeRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  /** @format date */
+  hireDate?: string;
+  schedule?: WorkWeekDto;
+}
+
+export interface NewScheduleRequest {
+  /** @format date */
+  validFrom?: string;
+  schedule?: WorkWeekDto;
+}
+
+export interface TerminationRequest {
+  /** @format date */
+  terminationDate?: string | null;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -460,9 +502,43 @@ export class Api<
     /**
      * No description
      *
-     * @tags Users
+     * @tags Me
+     * @name GetMySchedules
+     * @request GET:/api/me/schedules
+     * @secure
+     */
+    getMySchedules: (params: RequestParams = {}) =>
+      this.request<ScheduleResponse[], any>({
+        path: `/api/me/schedules`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Employees
+     * @name GetEmployees
+     * @request GET:/api/employees
+     * @secure
+     */
+    getEmployees: (params: RequestParams = {}) =>
+      this.request<EmployeeResponse[], any>({
+        path: `/api/employees`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Employees
      * @name CreateEmployee
-     * @request POST:/api/users/employees
+     * @request POST:/api/employees
      * @secure
      */
     createEmployee: (data: CreateEmployeeRequest, params: RequestParams = {}) =>
@@ -470,12 +546,73 @@ export class Api<
         CreatedEmployeeResponse,
         HttpValidationProblemDetails | ProblemDetails
       >({
-        path: `/api/users/employees`,
+        path: `/api/employees`,
         method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Employees
+     * @name GetScheduleHistory
+     * @request GET:/api/employees/{id}/schedules
+     * @secure
+     */
+    getScheduleHistory: (id: string, params: RequestParams = {}) =>
+      this.request<ScheduleResponse[], void>({
+        path: `/api/employees/${id}/schedules`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Employees
+     * @name AddSchedule
+     * @request POST:/api/employees/{id}/schedules
+     * @secure
+     */
+    addSchedule: (
+      id: string,
+      data: NewScheduleRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/employees/${id}/schedules`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Employees
+     * @name SetTerminationDate
+     * @request PUT:/api/employees/{id}/termination
+     * @secure
+     */
+    setTerminationDate: (
+      id: string,
+      data: TerminationRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, ProblemDetails | void>({
+        path: `/api/employees/${id}/termination`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };

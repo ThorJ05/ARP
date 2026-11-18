@@ -1,10 +1,11 @@
-﻿using Infrastructure.Auth;
-using Infrastructure.Repositories;
+﻿using BusinessEsbjerg.Holiday.Infrastructure.Auth;
+using BusinessEsbjerg.Holiday.Infrastructure.Data;
+using BusinessEsbjerg.Holiday.Infrastructure.Repositories;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
 using LinqToDB.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Service.Abstractions;
 
-namespace Infrastructure;
+namespace BusinessEsbjerg.Holiday.Infrastructure;
 
 public static class DependencyInjection
 {
@@ -15,8 +16,15 @@ public static class DependencyInjection
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IScheduleRepository, ScheduleRepository>();
+        services.AddScoped<ILedgerRepository, LedgerRepository>();
+        services.AddScoped<IHolidayRequestRepository, HolidayRequestRepository>();
+
+        services.AddScoped<DbSeeder>();
+        services.AddScoped<AccountBootstrapper>();
         return services;
     }
 }

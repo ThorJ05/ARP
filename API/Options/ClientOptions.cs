@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace API.Options;
+namespace BusinessEsbjerg.Holiday.Api.Options;
 
 public class ClientOptions
 {

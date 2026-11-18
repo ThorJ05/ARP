@@ -1,18 +1,21 @@
-using API.Auth;
-using API.Endpoints;
-using API.Errors;
-using API.Options;
+using BusinessEsbjerg.Holiday.Api.Auth;
+using BusinessEsbjerg.Holiday.Api.Endpoints;
+using BusinessEsbjerg.Holiday.Api.Errors;
+using BusinessEsbjerg.Holiday.Api.Options;
 using BusinessEsbjerg.Holiday.Domain.Enums;
 using BusinessEsbjerg.Holiday.Infrastructure.Data;
 using FluentValidation;
-using Infrastructure;
+using BusinessEsbjerg.Holiday.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using NSwag;
 using NSwag.Generation.Processors.Security;
 using Serilog;
-using Service.Abstractions;
-using Service.Auth;
-using Service.Users;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
+using BusinessEsbjerg.Holiday.Service.Auth;
+using BusinessEsbjerg.Holiday.Service.Employees;
+using BusinessEsbjerg.Holiday.Service.Requests;
+using BusinessEsbjerg.Holiday.Service.Schedules;
+using BusinessEsbjerg.Holiday.Service.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 FluentValidation.ValidatorOptions.Global.LanguageManager.Culture = new System.Globalization.CultureInfo("en");
@@ -55,6 +58,9 @@ builder.Services.AddJwtAuth(builder.Configuration);
 builder.Services.AddSingleton(builder.Configuration.GetSection("Lockout").Get<LockoutSettings>() ?? new LockoutSettings());
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<EmployeeService>();
+builder.Services.AddScoped<ScheduleService>();
+builder.Services.AddScoped<HolidayRequestService>();
 
 // OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -84,10 +90,10 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 
     // rule values always, test data only in development
-    await DbSeeder.SeedAsync(db, includeTestData: app.Environment.IsDevelopment());
+    await scope.ServiceProvider.GetRequiredService<DbSeeder>().SeedAsync(includeTestData: app.Environment.IsDevelopment());
 
     // the accountant and system owner logins on a new database (fly secrets in production)
-    var warnings = await AccountBootstrapper.EnsureAsync(db,
+    var warnings = await scope.ServiceProvider.GetRequiredService<AccountBootstrapper>().EnsureAsync(
     [
         new BootstrapLogin(Role.Accountant,
             app.Configuration["Bootstrap:Accountant:Email"], app.Configuration["Bootstrap:Accountant:Password"]),
@@ -120,6 +126,6 @@ app.MapGet("/", (IClock clock) => $"Hello World, today is {clock.Today}")
 
 app.MapAuthEndpoints();
 app.MapMeEndpoints();
-app.MapUserEndpoints();
+app.MapEmployeeEndpoints();
 
 app.Run();

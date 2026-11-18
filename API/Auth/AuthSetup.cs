@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Service.Abstractions;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
 
-namespace API.Auth;
+namespace BusinessEsbjerg.Holiday.Api.Auth;
 
 public static class AuthSetup
 {
@@ -47,7 +47,9 @@ public static class AuthSetup
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
             .AddPolicy(Policies.Employee, p => p.RequireRole(nameof(Role.Employee)).RequireClaim(AuthClaims.EmployeeId))
             .AddPolicy(Policies.Accountant, p => p.RequireRole(nameof(Role.Accountant)))
-            .AddPolicy(Policies.SystemOwner, p => p.RequireRole(nameof(Role.SystemOwner)));
+            .AddPolicy(Policies.SystemOwner, p => p.RequireRole(nameof(Role.SystemOwner)))
+            .AddPolicy(Policies.AccountantOrSystemOwner,
+                p => p.RequireRole(nameof(Role.Accountant), nameof(Role.SystemOwner)));
 
         return services;
     }

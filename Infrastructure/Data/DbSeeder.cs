@@ -1,10 +1,10 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Entities;
 using BusinessEsbjerg.Holiday.Domain.Enums;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
 using LinqToDB;
 using LinqToDB.Async;
 using LinqToDB.Data;
 using LinqToDB.EntityFrameworkCore;
-using Infrastructure.Auth;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
 
@@ -12,12 +12,12 @@ namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
 /// Inserts the rule values (always) and test data (development only). Safe to run multiple times.
 /// All test users share the password "Test1234!" (development only).
 /// </summary>
-public static class DbSeeder
+public class DbSeeder(AppDbContext context, IPasswordHasher hasher)
 {
     private const string EmailDomain = "@businessesbjerg.com";
     private const string DevPassword = "Test1234!";
 
-    public static async Task SeedAsync(AppDbContext context, bool includeTestData)
+    public async Task SeedAsync(bool includeTestData)
     {
         // Linq2db connection that reuses the EF Core connection and table mapping
         await using var db = context.CreateLinqToDBConnection();
@@ -77,17 +77,15 @@ public static class DbSeeder
         }
     }
 
-    private static async Task SeedEmployeesAndUsersAsync(DataConnection db)
+    private async Task SeedEmployeesAndUsersAsync(DataConnection db)
     {
         if (await db.GetTable<Employee>().AnyAsync()) return;
 
-        var hasher = new Pbkdf2PasswordHasher();
-
         // Full time
-        await AddEmployeeAsync(db, hasher, "Anna Fulltime", "anna", new DateOnly(2023, 1, 1));
+        await AddEmployeeAsync(db, "Anna Fulltime", "anna", new DateOnly(2023, 1, 1));
 
         // Full time at first, then part time Mon-Wed from 1 Sep 2025 (to test schedule history)
-        var bo = await AddEmployeeAsync(db, hasher, "Bo Parttime", "bo", new DateOnly(2024, 3, 1));
+        var bo = await AddEmployeeAsync(db, "Bo Parttime", "bo", new DateOnly(2024, 3, 1));
         await db.InsertAsync(new WorkScheduleEntry
         {
             EmployeeId = bo.Id,
@@ -98,20 +96,20 @@ public static class DbSeeder
         });
 
         // New starter this month
-        await AddEmployeeAsync(db, hasher, "Dan Newstarter", "dan", new DateOnly(2026, 11, 3));
+        await AddEmployeeAsync(db, "Dan Newstarter", "dan", new DateOnly(2026, 11, 3));
 
         // Has left the company
-        await AddEmployeeAsync(db, hasher, "Erik Terminated", "erik", new DateOnly(2021, 2, 1),
+        await AddEmployeeAsync(db, "Erik Terminated", "erik", new DateOnly(2021, 2, 1),
             terminated: new DateOnly(2026, 9, 30));
 
         // accountant and system owner logins (not linked to an employee)
-        await db.InsertAsync(NewUser(hasher, "regnskab" + EmailDomain, Role.Accountant, null));
-        await db.InsertAsync(NewUser(hasher, "systemejer" + EmailDomain, Role.SystemOwner, null));
+        await db.InsertAsync(NewUser("regnskab" + EmailDomain, Role.Accountant, null));
+        await db.InsertAsync(NewUser("systemejer" + EmailDomain, Role.SystemOwner, null));
     }
 
     // creates an employee with a full-time schedule, both holiday accounts and a login
-    private static async Task<Employee> AddEmployeeAsync(DataConnection db, Pbkdf2PasswordHasher hasher,
-        string name, string login, DateOnly hired, DateOnly? terminated = null)
+    private async Task<Employee> AddEmployeeAsync(DataConnection db, string name, string login, DateOnly hired,
+        DateOnly? terminated = null)
     {
         var employee = new Employee { Name = name, HireDate = hired, TerminationDate = terminated };
 
@@ -119,12 +117,12 @@ public static class DbSeeder
         await db.InsertAsync(WorkScheduleEntry.FullTime(employee.Id, hired));
         await db.InsertAsync(new HolidayAccount { EmployeeId = employee.Id, Type = AccountType.Weeks1To5 });
         await db.InsertAsync(new HolidayAccount { EmployeeId = employee.Id, Type = AccountType.Week6 });
-        await db.InsertAsync(NewUser(hasher, login + EmailDomain, Role.Employee, employee.Id));
+        await db.InsertAsync(NewUser(login + EmailDomain, Role.Employee, employee.Id));
 
         return employee;
     }
 
-    private static User NewUser(Pbkdf2PasswordHasher hasher, string email, Role role, Guid? employeeId)
+    private User NewUser(string email, Role role, Guid? employeeId)
     {
         var user = new User { Email = email, Role = role, EmployeeId = employeeId };
         user.PasswordHash = hasher.Hash(user, DevPassword);

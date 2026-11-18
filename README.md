@@ -73,9 +73,12 @@ Every endpoint needs a valid token unless it is marked as public.
 | Log in (`POST /api/auth/login`) | Yes | Yes | Yes | Yes |
 | Own login info (`GET /api/auth/me`) | No | Yes | Yes | Yes |
 | Own balances and requests (`GET /api/me/balances`, `GET /api/me/requests`) | No | Only their own | No | No |
-| Create employees with a login and work schedule (`POST /api/users/employees`) | No | No | No | Yes |
+| Create employees with a login and work schedule (`POST /api/employees`) | No | No | No | Yes |
+| See all employees and their schedule history (`GET /api/employees`, `GET /api/employees/{id}/schedules`) | No | No | Yes | Yes |
+| Give an employee a new work schedule (`POST /api/employees/{id}/schedules`) | No | No | Yes | Yes |
+| Set an employee's end date (`PUT /api/employees/{id}/termination`) | No | No | No | Yes |
+| Own work schedule, read only (`GET /api/me/schedules`) | No | Only their own | No | No |
 | Approve or reject holiday, cancellation and transfer requests *(planned)* | No | No | Yes | No |
-| Change work schedules *(planned)* | No | No | Yes | Yes |
 | Global rules and company days off *(planned)* | No | No | No | Yes |
 | See everyone's planned holiday in the calendar *(planned)* | No | Yes | Yes | Yes |
 

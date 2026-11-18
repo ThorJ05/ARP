@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import type { BalanceResponse, MyRequestResponse } from "../api/api";
+import type { BalanceResponse, MyRequestResponse, ScheduleResponse } from "../api/api";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { ScheduleTable } from "../components/schedule";
 import { errorMessage, isUnauthorized } from "../utils/errors";
 
 const accountLabels: Record<string, string> = {
@@ -13,13 +14,15 @@ export function EmployeePage() {
   const { session, logout } = useAuth();
   const [balances, setBalances] = useState<BalanceResponse[] | null>(null);
   const [requests, setRequests] = useState<MyRequestResponse[] | null>(null);
+  const [schedules, setSchedules] = useState<ScheduleResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([api.api.getMyBalances(), api.api.getMyRequests()])
-      .then(([balanceResponse, requestResponse]) => {
+    Promise.all([api.api.getMyBalances(), api.api.getMyRequests(), api.api.getMySchedules()])
+      .then(([balanceResponse, requestResponse, scheduleResponse]) => {
         setBalances(balanceResponse.data);
         setRequests(requestResponse.data);
+        setSchedules(scheduleResponse.data);
       })
       .catch((err) => (isUnauthorized(err) ? logout() : setError(errorMessage(err))));
   }, [logout]);
@@ -49,6 +52,12 @@ export function EmployeePage() {
             </tbody>
           </table>
         )}
+      </section>
+
+      <section className="card wide">
+        <h3>My work schedule</h3>
+        <p className="muted">Only accounting and the system owner can change your schedule.</p>
+        {schedules && <ScheduleTable schedules={schedules} />}
       </section>
 
       <section className="card">

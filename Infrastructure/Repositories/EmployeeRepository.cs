@@ -1,13 +1,13 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Entities;
 using BusinessEsbjerg.Holiday.Infrastructure.Data;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
 using LinqToDB;
 using LinqToDB.Async;
 using LinqToDB.EntityFrameworkCore;
-using Service.Abstractions;
 
-namespace Infrastructure.Repositories;
+namespace BusinessEsbjerg.Holiday.Infrastructure.Repositories;
 
-/// <summary>Employee data (balances and requests), read with linq2db.</summary>
+/// <summary>Employees, read and written with linq2db.</summary>
 public class EmployeeRepository(AppDbContext context) : IEmployeeRepository
 {
     public async Task<Employee?> GetByIdAsync(Guid id, CancellationToken ct = default)
@@ -16,36 +16,42 @@ public class EmployeeRepository(AppDbContext context) : IEmployeeRepository
         return await db.GetTable<Employee>().FirstOrDefaultAsync(e => e.Id == id, ct);
     }
 
-    public async Task<IReadOnlyList<AccountBalance>> GetBalancesAsync(Guid employeeId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<EmployeeWithEmail>> GetAllAsync(CancellationToken ct = default)
     {
         await using var db = context.CreateLinqToDBConnection();
 
-        var accounts = await db.GetTable<HolidayAccount>()
-            .Where(a => a.EmployeeId == employeeId)
+        var employees = await db.GetTable<Employee>().OrderBy(e => e.Name).ToListAsync(ct);
+        var emails = await db.GetTable<User>()
+            .Where(u => u.EmployeeId != null)
+            .Select(u => new { u.EmployeeId, u.Email })
             .ToListAsync(ct);
 
-        var accountIds = accounts.Select(a => a.Id).ToList();
-
-        // the balance is the sum of all ledger entries on the account
-        var sums = await db.GetTable<LedgerEntry>()
-            .Where(e => accountIds.Contains(e.AccountId))
-            .GroupBy(e => e.AccountId)
-            .Select(g => new { AccountId = g.Key, Hours = g.Sum(e => e.Hours) })
-            .ToListAsync(ct);
-
-        return accounts
-            .OrderBy(a => a.Type)
-            .Select(a => new AccountBalance(a.Type, sums.FirstOrDefault(s => s.AccountId == a.Id)?.Hours ?? 0m))
+        return employees
+            .Select(e => new EmployeeWithEmail(e, emails.FirstOrDefault(u => u.EmployeeId == e.Id)?.Email))
             .ToList();
     }
 
-    public async Task<IReadOnlyList<HolidayRequest>> GetRequestsAsync(Guid employeeId, CancellationToken ct = default)
+    public async Task CreateAsync(Employee employee, WorkScheduleEntry schedule, IEnumerable<HolidayAccount> accounts,
+        User login, CancellationToken ct = default)
     {
         await using var db = context.CreateLinqToDBConnection();
-        
-        return await db.GetTable<HolidayRequest>()
-            .Where(r => r.EmployeeId == employeeId)
-            .OrderByDescending(r => r.StartDate)
-            .ToListAsync(ct);
+        await using var transaction = await db.BeginTransactionAsync(ct);
+
+        await db.InsertAsync(employee, token: ct);
+        await db.InsertAsync(schedule, token: ct);
+        foreach (var account in accounts)
+            await db.InsertAsync(account, token: ct);
+        await db.InsertAsync(login, token: ct);
+
+        await transaction.CommitAsync(ct);
+    }
+
+    public async Task SetTerminationDateAsync(Guid employeeId, DateOnly? terminationDate, CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        await db.GetTable<Employee>()
+            .Where(e => e.Id == employeeId)
+            .Set(e => e.TerminationDate, terminationDate)
+            .UpdateAsync(ct);
     }
 }

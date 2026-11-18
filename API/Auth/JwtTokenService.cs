@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Service.Abstractions;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
 
-namespace API.Auth;
+namespace BusinessEsbjerg.Holiday.Api.Auth;
 
 /// <summary>Creates the JWT the client gets after logging in. It holds the user id, email, role and employee id.</summary>
 public class JwtTokenService(IOptions<JwtOptions> options, IClock clock) : ITokenService

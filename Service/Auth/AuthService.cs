@@ -1,7 +1,7 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Entities;
-using Service.Abstractions;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
 
-namespace Service.Auth;
+namespace BusinessEsbjerg.Holiday.Service.Auth;
 
 /// <summary>FailReason is only for the log, the caller always gets the same message.</summary>
 public record LoginResult(bool Succeeded, AuthToken? Token, string? FailReason)

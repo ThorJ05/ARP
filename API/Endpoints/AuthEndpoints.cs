@@ -1,12 +1,12 @@
 ﻿using System.Security.Claims;
-using API.Auth;
-using API.Validation;
+using BusinessEsbjerg.Holiday.Api.Auth;
+using BusinessEsbjerg.Holiday.Api.Validation;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Service.Abstractions;
-using Service.Auth;
+using BusinessEsbjerg.Holiday.Service.Auth;
+using BusinessEsbjerg.Holiday.Service.Users;
 
-namespace API.Endpoints;
+namespace BusinessEsbjerg.Holiday.Api.Endpoints;
 
 public record LoginRequest(string Email, string Password);
 public record LoginResponse(string Token, DateTime ExpiresAtUtc);
@@ -61,13 +61,12 @@ public static class AuthEndpoints
     }
 
     private static async Task<Results<Ok<MeResponse>, UnauthorizedHttpResult>> GetMe(
-        ClaimsPrincipal principal, IUserRepository users, IEmployeeRepository employees, CancellationToken ct)
+        ClaimsPrincipal principal, UserService users, CancellationToken ct)
     {
-        var user = await users.GetByIdAsync(principal.GetUserId(), ct);
-        if (user is null)
+        var me = await users.GetCurrentUserAsync(principal.GetUserId(), ct);
+        if (me is null)
             return TypedResults.Unauthorized(); // the login was deleted after the token was made
 
-        var employee = user.EmployeeId is { } id ? await employees.GetByIdAsync(id, ct) : null;
-        return TypedResults.Ok(new MeResponse(user.Id, user.Email, user.Role.ToString(), user.EmployeeId, employee?.Name));
+        return TypedResults.Ok(new MeResponse(me.UserId, me.Email, me.Role.ToString(), me.EmployeeId, me.EmployeeName));
     }
 }

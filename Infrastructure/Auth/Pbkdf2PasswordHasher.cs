@@ -1,9 +1,9 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using Service.Abstractions;
+using BusinessEsbjerg.Holiday.Service.Abstractions;
 
-namespace Infrastructure.Auth;
+namespace BusinessEsbjerg.Holiday.Infrastructure.Auth;
 
 /// <summary>
 /// Salted PBKDF2 (HMAC-SHA512) using ASP.NET Core's PasswordHasher. Each password gets its own random salt,

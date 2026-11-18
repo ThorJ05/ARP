@@ -1,6 +1,6 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Entities;
 
-namespace Service.Abstractions;
+namespace BusinessEsbjerg.Holiday.Service.Abstractions;
 
 public enum PasswordCheck
 {
