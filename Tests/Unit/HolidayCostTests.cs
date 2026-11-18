@@ -1,4 +1,5 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Entities;
+using BusinessEsbjerg.Holiday.Domain.Requests;
 using static BusinessEsbjerg.Holiday.Tests.Unit.TestData;
 
 namespace BusinessEsbjerg.Holiday.Tests.Unit;
@@ -7,14 +8,17 @@ public class HolidayCostTests
 {
     private readonly Employee _employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
 
+    private static decimal Cost(Employee employee, DateOnly start, DateOnly end, HashSet<DateOnly>? daysOff = null) =>
+        HolidayDays.Between(employee, start, end, daysOff ?? []).Sum(d => d.Hours);
+
     [Fact]
     public void A_short_Friday_costs_less_than_a_long_Tuesday()
     {
         var friday = new DateOnly(2026, 11, 20);
         var tuesday = new DateOnly(2026, 11, 17);
 
-        Assert.Equal(7m, _employee.GetHolidayHours(friday, friday));
-        Assert.Equal(7.5m, _employee.GetHolidayHours(tuesday, tuesday));
+        Assert.Equal(7m, Cost(_employee, friday, friday));
+        Assert.Equal(7.5m, Cost(_employee, tuesday, tuesday));
     }
     
 
@@ -22,7 +26,7 @@ public class HolidayCostTests
     public void A_whole_week_costs_37_hours_and_weekends_are_free()
     {
         // Monday 16 to Sunday 22 November 2026
-        Assert.Equal(37m, _employee.GetHolidayHours(new DateOnly(2026, 11, 16), new DateOnly(2026, 11, 22)));
+        Assert.Equal(37m, Cost(_employee, new DateOnly(2026, 11, 16), new DateOnly(2026, 11, 22)));
     }
 
     [Fact]
@@ -31,7 +35,7 @@ public class HolidayCostTests
         var christmasEve = new DateOnly(2026, 12, 24); // Thursday
         var daysOff = new HashSet<DateOnly> { christmasEve };
 
-        Assert.Equal(0m, _employee.GetHolidayHours(christmasEve, christmasEve, daysOff));
+        Assert.Equal(0m, Cost(_employee, christmasEve, christmasEve, daysOff));
     }
     
     
@@ -43,7 +47,7 @@ public class HolidayCostTests
         employee.WorkSchedule.Add(PartTime(employee.Id, new DateOnly(2026, 11, 19)));
 
         // Wed 18 (full time 7.5) + Thu 19 and Fri 20 (part time: not working days)
-        Assert.Equal(7.5m, employee.GetHolidayHours(new DateOnly(2026, 11, 18), new DateOnly(2026, 11, 20)));
+        Assert.Equal(7.5m, Cost(employee, new DateOnly(2026, 11, 18), new DateOnly(2026, 11, 20)));
     }
     
     

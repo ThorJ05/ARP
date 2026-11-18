@@ -76,24 +76,6 @@ export interface BalanceBucketResponse {
   days?: number;
 }
 
-export interface MyRequestResponse {
-  /** @format guid */
-  id?: string;
-  account?: string;
-  /** @format date */
-  startDate?: string;
-  /** @format date */
-  endDate?: string;
-  /** @format decimal */
-  hours?: number;
-  status?: string;
-  comment?: string | null;
-  decisionReason?: string | null;
-  /** @format date-time */
-  createdAtUtc?: string;
-  canCancel?: boolean;
-}
-
 export interface ScheduleResponse {
   /** @format guid */
   id?: string;
@@ -129,6 +111,79 @@ export interface WorkWeekDto {
   fridayStart?: string | null;
   /** @format time */
   fridayEnd?: string | null;
+}
+
+export interface MyRequestResponse {
+  /** @format guid */
+  id?: string;
+  account?: string;
+  /** @format date */
+  startDate?: string;
+  /** @format date */
+  endDate?: string;
+  /** @format decimal */
+  hours?: number;
+  status?: string;
+  comment?: string | null;
+  decisionReason?: string | null;
+  /** @format date-time */
+  decidedAtUtc?: string | null;
+  /** @format date-time */
+  createdAtUtc?: string;
+  canCancel?: boolean;
+}
+
+export interface RequestCheckResponse {
+  /** @format decimal */
+  hours?: number;
+  /** @format int32 */
+  workingDays?: number;
+  errors?: string[];
+}
+
+export interface HolidayRequestDto {
+  account?: string;
+  /** @format date */
+  startDate?: string;
+  /** @format date */
+  endDate?: string;
+  comment?: string | null;
+}
+
+export interface CreatedRequestResponse {
+  /** @format guid */
+  id?: string;
+  /** @format decimal */
+  hours?: number;
+}
+
+export interface QueueItemResponse {
+  /** @format guid */
+  id?: string;
+  kind?: string;
+  /** @format guid */
+  employeeId?: string;
+  employeeName?: string;
+  account?: string;
+  /** @format date */
+  startDate?: string;
+  /** @format date */
+  endDate?: string | null;
+  /** @format decimal */
+  hours?: number;
+  comment?: string | null;
+  /** @format date-time */
+  createdAtUtc?: string;
+  /** @format date */
+  balanceDate?: string;
+  /** @format decimal */
+  balanceHours?: number;
+  /** @format decimal */
+  balanceAfterHours?: number;
+}
+
+export interface DecisionDto {
+  reason?: string | null;
 }
 
 export interface EmployeeResponse {
@@ -173,30 +228,6 @@ export interface NewScheduleRequest {
 export interface TerminationRequest {
   /** @format date */
   terminationDate?: string | null;
-}
-
-export interface HolidayRequestDto {
-  account?: string;
-  /** @format date */
-  startDate?: string;
-  /** @format date */
-  endDate?: string;
-  comment?: string | null;
-}
-
-export interface RequestCheckResponse {
-  /** @format decimal */
-  hours?: number;
-  /** @format int32 */
-  workingDays?: number;
-  errors?: string[];
-}
-
-export interface CreatedRequestResponse {
-  /** @format guid */
-  id?: string;
-  /** @format decimal */
-  hours?: number;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -611,6 +642,111 @@ export class Api<
         path: `/api/me/requests/${id}/cancel`,
         method: "POST",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Requests
+     * @name GetRequestQueue
+     * @request GET:/api/requests/queue
+     * @secure
+     */
+    getRequestQueue: (params: RequestParams = {}) =>
+      this.request<QueueItemResponse[], any>({
+        path: `/api/requests/queue`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Requests
+     * @name ApproveHolidayRequest
+     * @request POST:/api/requests/holiday/{id}/approve
+     * @secure
+     */
+    approveHolidayRequest: (
+      id: string,
+      data: DecisionDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/requests/holiday/${id}/approve`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Requests
+     * @name DeclineHolidayRequest
+     * @request POST:/api/requests/holiday/{id}/decline
+     * @secure
+     */
+    declineHolidayRequest: (
+      id: string,
+      data: DecisionDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/requests/holiday/${id}/decline`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Requests
+     * @name ApproveTransferRequest
+     * @request POST:/api/requests/transfer/{id}/approve
+     * @secure
+     */
+    approveTransferRequest: (
+      id: string,
+      data: DecisionDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/requests/transfer/${id}/approve`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Requests
+     * @name DeclineTransferRequest
+     * @request POST:/api/requests/transfer/{id}/decline
+     * @secure
+     */
+    declineTransferRequest: (
+      id: string,
+      data: DecisionDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/requests/transfer/${id}/decline`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 

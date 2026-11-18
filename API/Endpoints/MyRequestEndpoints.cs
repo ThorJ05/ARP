@@ -3,7 +3,6 @@ using BusinessEsbjerg.Holiday.Api.Auth;
 using BusinessEsbjerg.Holiday.Api.Validation;
 using BusinessEsbjerg.Holiday.Domain.Enums;
 using BusinessEsbjerg.Holiday.Domain.Requests;
-using BusinessEsbjerg.Holiday.Service;
 using BusinessEsbjerg.Holiday.Service.Requests;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -25,13 +24,14 @@ public record CreatedRequestResponse(Guid Id, decimal Hours);
 
 public record MyRequestResponse(
     Guid Id, string Account, DateOnly StartDate, DateOnly EndDate, decimal Hours,
-    string Status, string? Comment, string? DecisionReason, DateTime CreatedAtUtc, bool CanCancel)
+    string Status, string? Comment, string? DecisionReason, DateTime? DecidedAtUtc, DateTime CreatedAtUtc,
+    bool CanCancel)
 {
     public static MyRequestResponse From(RequestView view)
     {
         var r = view.Request;
         return new MyRequestResponse(r.Id, r.AccountType.ToString(), r.StartDate, r.EndDate, r.Hours,
-            r.Status.ToString(), r.Comment, r.DecisionReason, r.CreatedAtUtc, view.CanCancel);
+            r.Status.ToString(), r.Comment, r.DecisionReason, r.DecidedAtUtc, r.CreatedAtUtc, view.CanCancel);
     }
 }
 
@@ -108,13 +108,6 @@ public static class MyRequestEndpoints
     }
 
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> Cancel(
-        Guid id, ClaimsPrincipal principal, HolidayRequestService requests, CancellationToken ct)
-    {
-        var result = await requests.CancelAsync(principal.GetEmployeeId()!.Value, id, ct);
-        if (result.NotFound) return TypedResults.NotFound();
-        if (result.Error is not null)
-            return TypedResults.Problem(
-                statusCode: StatusCodes.Status400BadRequest, title: "Not allowed", detail: result.Error);
-        return TypedResults.NoContent();
-    }
+        Guid id, ClaimsPrincipal principal, HolidayRequestService requests, CancellationToken ct) =>
+        ChangeResults.ToHttp(await requests.CancelAsync(principal.GetEmployeeId()!.Value, id, ct));
 }

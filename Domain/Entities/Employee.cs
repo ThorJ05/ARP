@@ -22,21 +22,7 @@ public class Employee
             .FirstOrDefault();
 
     // How many hours the employee works on the given date.
+    
     public decimal GetHoursFor(DateOnly date) =>
         GetScheduleFor(date)?.GetHours(date.DayOfWeek) ?? 0m;
-
-    // What a holiday from start to end (both included) costs in hours: each day costs the hours of that
-    // weekday in the schedule used on the day, so a short Friday costs less than a long Tuesday.
-    // Weekends cost nothing, and neither do the days in daysOff (public holidays and company days off).
-    public decimal GetHolidayHours(DateOnly start, DateOnly end, IReadOnlySet<DateOnly>? daysOff = null)
-    {
-        var hours = 0m;
-        for (var day = start; day <= end; day = day.AddDays(1))
-        {
-            if (daysOff?.Contains(day) != true)
-                hours += GetHoursFor(day);
-        }
-
-        return hours;
-    }
 }

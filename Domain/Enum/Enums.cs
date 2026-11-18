@@ -3,7 +3,8 @@
 public enum Role
 {
     Employee,    // normal employee login
-    Accountant,  // approves and rejects requests (only one)
+    Accountant,  // approves and rejects requests
+                 // (only one)
     SystemOwner  // creates users and sets global rules (only one)
 }
 
@@ -20,8 +21,10 @@ public enum LedgerEntryType
     Transfer,           // hours moved to the next period
     Payout,             // (-) hours paid out by payroll (we don't store the amount)
     Correction,         // manual fix
-    ScheduleConversion  // balance changed because the work schedule changed
+    ScheduleConversion, // balance changed because the work schedule changed
+    Cancellation        // (+) approved holiday that was cancelled, gives the hours back
 }
+
 
 public enum RequestStatus
 {

@@ -1,10 +1,11 @@
 ﻿using BusinessEsbjerg.Holiday.Domain.Enums;
+using BusinessEsbjerg.Holiday.Domain.Requests;
 
 namespace BusinessEsbjerg.Holiday.Domain.Entities;
 
 // Holiday request in whole days that the accountant approves or rejects.
 // If approved holiday hasn't been used yet, the employee has to ask for it to be cancelled (CancellationRequested).
-public class HolidayRequest
+public class HolidayRequest : IReviewedRequest
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
     public Guid EmployeeId { get; set; }
@@ -50,6 +51,38 @@ public class HolidayRequest
                 : $"A request that is {Status} can't be cancelled.";
 
         Status = Status == RequestStatus.Pending ? RequestStatus.Cancelled : RequestStatus.CancellationRequested;
+        return null;
+    }
+
+    // Pending becomes Approved. An approved cancellation becomes Cancelled and the hours are given back.
+    public string? Approve(Guid userId, string? note, DateTime now)
+    {
+        RequestStatus? next = Status switch
+        {
+            RequestStatus.Pending => RequestStatus.Approved,
+            RequestStatus.CancellationRequested => RequestStatus.Cancelled,
+            _ => null
+        };
+        if (next is null) return $"A request that is {Status} can't be approved.";
+
+        Review.Record(this, next.Value, userId, note, now);
+        return null;
+    }
+
+    // Pending becomes Rejected. A declined cancellation means the holiday stays approved.
+    public string? Decline(Guid userId, string? reason, DateTime now)
+    {
+        if (string.IsNullOrWhiteSpace(reason)) return Review.ReasonMissing;
+
+        RequestStatus? next = Status switch
+        {
+            RequestStatus.Pending => RequestStatus.Rejected,
+            RequestStatus.CancellationRequested => RequestStatus.Approved,
+            _ => null
+        };
+        if (next is null) return $"A request that is {Status} can't be declined.";
+
+        Review.Record(this, next.Value, userId, reason, now);
         return null;
     }
 }

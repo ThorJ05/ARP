@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IHolidayRequestRepository, HolidayRequestRepository>();
         services.AddScoped<IRuleRepository, RuleRepository>();
         services.AddScoped<ICompanyDayOffRepository, CompanyDayOffRepository>();
+        services.AddScoped<ITransferRequestRepository, TransferRequestRepository>();
 
         services.AddScoped<DbSeeder>();
         services.AddScoped<AccountBootstrapper>();
