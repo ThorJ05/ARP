@@ -10,10 +10,102 @@
  * ---------------------------------------------------------------
  */
 
-export interface ValidationDemoRequest {
-  name?: string;
+export interface LoginResponse {
+  token?: string;
+  /** @format date-time */
+  expiresAtUtc?: string;
+}
+
+export type HttpValidationProblemDetails = ProblemDetails & {
+  errors?: Record<string, string[]>;
+  [key: string]: any;
+};
+
+export interface ProblemDetails {
+  type?: string | null;
+  title?: string | null;
   /** @format int32 */
+  status?: number | null;
+  detail?: string | null;
+  instance?: string | null;
+  [key: string]: any;
+}
+
+export interface LoginRequest {
+  email?: string;
+  password?: string;
+}
+
+export interface MeResponse {
+  /** @format guid */
+  userId?: string;
+  email?: string;
+  role?: string;
+  /** @format guid */
+  employeeId?: string | null;
+  employeeName?: string | null;
+}
+
+export interface BalanceResponse {
+  account?: string;
+  /** @format decimal */
   hours?: number;
+}
+
+export interface MyRequestResponse {
+  /** @format guid */
+  id?: string;
+  account?: string;
+  /** @format date */
+  startDate?: string;
+  /** @format date */
+  endDate?: string;
+  /** @format decimal */
+  hours?: number;
+  status?: string;
+  comment?: string | null;
+  decisionReason?: string | null;
+  /** @format date-time */
+  createdAtUtc?: string;
+}
+
+export interface CreatedEmployeeResponse {
+  /** @format guid */
+  employeeId?: string;
+  /** @format guid */
+  userId?: string;
+}
+
+export interface CreateEmployeeRequest {
+  name?: string;
+  email?: string;
+  password?: string;
+  /** @format date */
+  hireDate?: string;
+  schedule?: WorkWeek;
+}
+
+export interface WorkWeek {
+  /** @format time */
+  mondayStart?: string | null;
+  /** @format time */
+  mondayEnd?: string | null;
+  /** @format time */
+  tuesdayStart?: string | null;
+  /** @format time */
+  tuesdayEnd?: string | null;
+  /** @format time */
+  wednesdayStart?: string | null;
+  /** @format time */
+  wednesdayEnd?: string | null;
+  /** @format time */
+  thursdayStart?: string | null;
+  /** @format time */
+  thursdayEnd?: string | null;
+  /** @format time */
+  fridayStart?: string | null;
+  /** @format time */
+  fridayEnd?: string | null;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -297,28 +389,93 @@ export class Api<
     /**
      * No description
      *
-     * @name ValidationDemo
-     * @request POST:/api/validation-demo
+     * @tags Auth
+     * @name Login
+     * @request POST:/api/auth/login
      */
-    validationDemo: (data: ValidationDemoRequest, params: RequestParams = {}) =>
-      this.request<void, any>({
-        path: `/api/validation-demo`,
+    login: (data: LoginRequest, params: RequestParams = {}) =>
+      this.request<
+        LoginResponse,
+        HttpValidationProblemDetails | ProblemDetails
+      >({
+        path: `/api/auth/login`,
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 
     /**
      * No description
      *
-     * @name ErrorDemo
-     * @request GET:/api/error-demo
+     * @tags Auth
+     * @name GetMe
+     * @request GET:/api/auth/me
+     * @secure
      */
-    errorDemo: (params: RequestParams = {}) =>
-      this.request<void, any>({
-        path: `/api/error-demo`,
+    getMe: (params: RequestParams = {}) =>
+      this.request<MeResponse, any>({
+        path: `/api/auth/me`,
         method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Me
+     * @name GetMyBalances
+     * @request GET:/api/me/balances
+     * @secure
+     */
+    getMyBalances: (params: RequestParams = {}) =>
+      this.request<BalanceResponse[], any>({
+        path: `/api/me/balances`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Me
+     * @name GetMyRequests
+     * @request GET:/api/me/requests
+     * @secure
+     */
+    getMyRequests: (params: RequestParams = {}) =>
+      this.request<MyRequestResponse[], any>({
+        path: `/api/me/requests`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Users
+     * @name CreateEmployee
+     * @request POST:/api/users/employees
+     * @secure
+     */
+    createEmployee: (data: CreateEmployeeRequest, params: RequestParams = {}) =>
+      this.request<
+        CreatedEmployeeResponse,
+        HttpValidationProblemDetails | ProblemDetails
+      >({
+        path: `/api/users/employees`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
   };

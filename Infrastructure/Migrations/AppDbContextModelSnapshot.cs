@@ -296,6 +296,12 @@ namespace Infrastructure.Migrations
                     b.Property<Guid?>("EmployeeId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LockoutEndUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");

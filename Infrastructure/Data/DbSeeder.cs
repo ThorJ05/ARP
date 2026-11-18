@@ -4,12 +4,12 @@ using LinqToDB;
 using LinqToDB.Async;
 using LinqToDB.Data;
 using LinqToDB.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
+using Infrastructure.Auth;
 
 namespace BusinessEsbjerg.Holiday.Infrastructure.Data;
 
 /// <summary>
-/// Inserts test data in the development environment. Safe to run multiple times.
+/// Inserts the rule values (always) and test data (development only). Safe to run multiple times.
 /// All test users share the password "Test1234!" (development only).
 /// </summary>
 public static class DbSeeder
@@ -17,12 +17,14 @@ public static class DbSeeder
     private const string EmailDomain = "@businessesbjerg.com";
     private const string DevPassword = "Test1234!";
 
-    public static async Task SeedAsync(AppDbContext context)
+    public static async Task SeedAsync(AppDbContext context, bool includeTestData)
     {
         // Linq2db connection that reuses the EF Core connection and table mapping
         await using var db = context.CreateLinqToDBConnection();
 
         await SeedRuleParametersAsync(db);
+
+        if (!includeTestData) return;
         await SeedCompanyDaysOffAsync(db);
         await SeedEmployeesAndUsersAsync(db);
     }
@@ -79,7 +81,7 @@ public static class DbSeeder
     {
         if (await db.GetTable<Employee>().AnyAsync()) return;
 
-        var hasher = new PasswordHasher<User>();
+        var hasher = new Pbkdf2PasswordHasher();
 
         // Full time
         await AddEmployeeAsync(db, hasher, "Anna Fulltime", "anna", new DateOnly(2023, 1, 1));
@@ -108,7 +110,7 @@ public static class DbSeeder
     }
 
     // creates an employee with a full-time schedule, both holiday accounts and a login
-    private static async Task<Employee> AddEmployeeAsync(DataConnection db, PasswordHasher<User> hasher,
+    private static async Task<Employee> AddEmployeeAsync(DataConnection db, Pbkdf2PasswordHasher hasher,
         string name, string login, DateOnly hired, DateOnly? terminated = null)
     {
         var employee = new Employee { Name = name, HireDate = hired, TerminationDate = terminated };
@@ -122,10 +124,10 @@ public static class DbSeeder
         return employee;
     }
 
-    private static User NewUser(PasswordHasher<User> hasher, string email, Role role, Guid? employeeId)
+    private static User NewUser(Pbkdf2PasswordHasher hasher, string email, Role role, Guid? employeeId)
     {
         var user = new User { Email = email, Role = role, EmployeeId = employeeId };
-        user.PasswordHash = hasher.HashPassword(user, DevPassword);
+        user.PasswordHash = hasher.Hash(user, DevPassword);
         return user;
     }
 }
