@@ -26,6 +26,7 @@ export function MyRequests({ requests, onCancel }: Props) {
           <th>Balance</th>
           <th className="number">Hours</th>
           <th>Status</th>
+          <th>Decision</th>
           <th />
         </tr>
       </thead>
@@ -36,9 +37,10 @@ export function MyRequests({ requests, onCancel }: Props) {
             <td>{r.endDate}</td>
             <td>{accountLabel(r.account)}</td>
             <td className="number">{(r.hours ?? 0).toFixed(2)}</td>
+            <td>{statusLabels[r.status ?? ""] ?? r.status}</td>
             <td>
-              {statusLabels[r.status ?? ""] ?? r.status}
-              {r.decisionReason && <span className="muted"> ({r.decisionReason})</span>}
+              {r.decidedAtUtc && <span className="muted">{r.decidedAtUtc.slice(0, 10)} </span>}
+              {r.decisionReason}
             </td>
             <td>
               {r.canCancel && (

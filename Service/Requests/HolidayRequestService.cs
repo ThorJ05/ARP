@@ -1,8 +1,8 @@
-﻿using BusinessEsbjerg.Holiday.Domain.Calendar;
-using BusinessEsbjerg.Holiday.Domain.Entities;
+﻿using BusinessEsbjerg.Holiday.Domain.Entities;
 using BusinessEsbjerg.Holiday.Domain.Requests;
 using BusinessEsbjerg.Holiday.Service.Abstractions;
 using BusinessEsbjerg.Holiday.Service.Balances;
+using BusinessEsbjerg.Holiday.Service.Calendar;
 
 namespace BusinessEsbjerg.Holiday.Service.Requests;
 
@@ -12,7 +12,7 @@ public record CreatedRequest(RequestCheck Check, Guid? RequestId);
 
 // The employee's own holiday requests. Approving and rejecting is done by the accountant.
 public class HolidayRequestService(
-    IHolidayRequestRepository requests, ICompanyDayOffRepository companyDaysOff, BalanceService balances, IClock clock)
+    IHolidayRequestRepository requests, DaysOffService daysOff, BalanceService balances, IClock clock)
 {
     public async Task<IReadOnlyList<RequestView>> GetForEmployeeAsync(Guid employeeId, CancellationToken ct = default)
     {
@@ -69,18 +69,9 @@ public class HolidayRequestService(
         var others = (await requests.GetForEmployeeAsync(employeeId, ct)).Where(r => r.IsActive()).ToList();
         var lastDay = request.End > request.Start ? request.End : request.Start;
         var until = HolidayRequestRules.SettleDateOnOrAfter(lastDay, data.Rules);
-        var daysOff = await DaysOffAsync(clock.Today.AddYears(-1), until, ct);
+        var free = await daysOff.GetBetweenAsync(clock.Today.AddYears(-1), until, ct);
 
         return new HolidayRequestRules(
-            data.Employee, data.Accounts, data.Entries, others, data.Rules, daysOff, clock.Today);
-    }
-
-    // public holidays and company days off
-    private async Task<IReadOnlySet<DateOnly>> DaysOffAsync(DateOnly from, DateOnly to, CancellationToken ct)
-    {
-        var days = (await companyDaysOff.GetBetweenAsync(from, to, ct)).Select(d => d.Date).ToHashSet();
-        for (var year = from.Year; year <= to.Year; year++)
-            days.UnionWith(DanishPublicHolidays.In(year));
-        return days;
+            data.Employee, data.Accounts, data.Entries, others, data.Rules, free, clock.Today);
     }
 }

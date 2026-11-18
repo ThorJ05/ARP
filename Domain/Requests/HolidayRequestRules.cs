@@ -21,15 +21,13 @@ public class HolidayRequestRules(
     Employee employee, IReadOnlyList<HolidayAccount> accounts, IReadOnlyList<LedgerEntry> entries,
     IReadOnlyList<HolidayRequest> otherRequests, RuleSet rules, IReadOnlySet<DateOnly> daysOff, DateOnly today)
 {
-    private record WorkDay(DateOnly Date, decimal Hours);
-
     public RequestCheck Check(NewHolidayRequest request)
     {
         var dateError = CheckDates(request);
         if (dateError is not null)
             return new RequestCheck(0m, 0, [dateError]);
 
-        var days = WorkingDays(request.Start, request.End);
+        var days = HolidayDays.Between(employee, request.Start, request.End, daysOff);
         if (days.Count == 0)
             return new RequestCheck(0m, 0, ["There are no working days in the chosen period."]);
 
@@ -70,7 +68,8 @@ public class HolidayRequestRules(
     private string? CheckNotice(NewHolidayRequest request, int workingDays)
     {
         var main = IsMainHoliday(request, workingDays);
-        var months = (int)rules.GetDecimal(main ? RuleKeys.NoticeMainHolidayMonths : RuleKeys.NoticeOtherHolidayMonths, today);
+        var noticeRule = main ? RuleKeys.NoticeMainHolidayMonths : RuleKeys.NoticeOtherHolidayMonths;
+        var months = (int)rules.GetDecimal(noticeRule, today);
         var earliest = today.AddMonths(months);
         if (request.Start >= earliest) return null;
 
@@ -103,7 +102,7 @@ public class HolidayRequestRules(
         (DateInYear(rules.Get(RuleKeys.MainHolidayWindowStart, date), date.Year),
          DateInYear(rules.Get(RuleKeys.MainHolidayWindowEnd, date), date.Year));
 
-    private IEnumerable<string> CheckBalance(NewHolidayRequest request, List<WorkDay> days)
+    private IEnumerable<string> CheckBalance(NewHolidayRequest request, IReadOnlyList<HolidayDay> days)
     {
         var account = accounts.SingleOrDefault(a => a.Type == request.Account);
         if (account is null)
@@ -135,7 +134,8 @@ public class HolidayRequestRules(
     }
 
     // holiday debt up to 5 days is allowed, but the balance must be 0 or more on 31 August
-    private IEnumerable<string> CheckWeeks1To5(List<LedgerEntry> ledger, List<WorkDay> days, DateOnly settleDate)
+    private IEnumerable<string> CheckWeeks1To5(List<LedgerEntry> ledger, IReadOnlyList<HolidayDay> days,
+        DateOnly settleDate)
     {
         foreach (var day in days)
         {
@@ -163,24 +163,11 @@ public class HolidayRequestRules(
                where !inLedger.Contains(r.Id)
                let account = accounts.SingleOrDefault(a => a.Type == r.AccountType)
                where account is not null
-               from day in WorkingDays(r.StartDate, r.EndDate)
+               from day in HolidayDays.Between(employee, r.StartDate, r.EndDate, daysOff)
                select Usage(account!.Id, day);
     }
 
-    private List<WorkDay> WorkingDays(DateOnly start, DateOnly end)
-    {
-        var days = new List<WorkDay>();
-        for (var date = start; date <= end; date = date.AddDays(1))
-        {
-            var hours = daysOff.Contains(date) ? 0m : employee.GetHoursFor(date);
-            if (hours > 0m)
-                days.Add(new WorkDay(date, hours));
-        }
-
-        return days;
-    }
-
-    private static LedgerEntry Usage(Guid accountId, WorkDay day) =>
+    private static LedgerEntry Usage(Guid accountId, HolidayDay day) =>
         new() { AccountId = accountId, Type = LedgerEntryType.Usage, Hours = -day.Hours, Date = day.Date };
 
     // rule values like "08-31"

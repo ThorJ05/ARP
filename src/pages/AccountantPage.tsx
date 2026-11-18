@@ -1,12 +1,18 @@
+import { useAuth } from "../auth/AuthContext";
 import { EmployeeAdmin } from "../components/EmployeeAdmin";
+import { RequestQueue } from "../components/RequestQueue";
 
 export function AccountantPage() {
+  const { logout } = useAuth();
+
   return (
     <>
       <section className="card wide">
-        <h2>Accountant</h2>
-        <p>Here you will approve or reject holiday requests, cancellations and transfers.</p>
-        <p className="muted">Handling requests is not built yet.</p>
+        <h2>Requests waiting for a decision</h2>
+        <p className="muted">
+          Balance is the balance on the last day of the holiday, with earned and approved holiday included.
+        </p>
+        <RequestQueue onUnauthorized={logout} />
       </section>
 
       <EmployeeAdmin canSetEndDate={false} />

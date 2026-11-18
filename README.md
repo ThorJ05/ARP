@@ -50,6 +50,9 @@ Run all tests with `dotnet test ARP.slnx` (GitHub Actions runs the same command 
   Holiday requests: weekends and Danish public holidays are free, notice periods, the main holiday window,
   at most 5 days of holiday debt, a balance of 0 or more on 31 August, week 6 only when usable, overlapping
   requests and cancelling.
+  Decisions: who and when is recorded, declining needs a reason, approved holiday writes one ledger entry per
+  working day, an approved cancellation gives back exactly the hours it used, and a transfer moves hours to
+  the next period.
 
 ## Security
 
@@ -92,7 +95,7 @@ Every endpoint needs a valid token unless it is marked as public.
 | Give an employee a new work schedule (`POST /api/employees/{id}/schedules`) | No | No | Yes | Yes |
 | Set an employee's end date (`PUT /api/employees/{id}/termination`) | No | No | No | Yes |
 | Own work schedule, read only (`GET /api/me/schedules`) | No | Only their own | No | No |
-| Approve or reject holiday, cancellation and transfer requests *(planned)* | No | No | Yes | No |
+| Queue of waiting requests, approve or decline holiday, cancellation and transfer requests (`/api/requests`) | No | No | Yes | No |
 | Global rules and company days off *(planned)* | No | No | No | Yes |
 | See everyone's planned holiday in the calendar *(planned)* | No | Yes | Yes | Yes |
 

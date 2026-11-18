@@ -125,17 +125,10 @@ public static class EmployeeEndpoints
 
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> AddSchedule(
         Guid id, NewScheduleRequest request, ScheduleService schedules, CancellationToken ct) =>
-        ToHttp(await schedules.AddScheduleAsync(id, request.ValidFrom, request.Schedule.ToWorkWeek(), ct));
+        ChangeResults.ToHttp(await schedules.AddScheduleAsync(id, request.ValidFrom, request.Schedule.ToWorkWeek(), ct));
 
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> SetTermination(
         Guid id, TerminationRequest request, EmployeeService employees, CancellationToken ct) =>
-        ToHttp(await employees.SetTerminationDateAsync(id, request.TerminationDate, ct));
+        ChangeResults.ToHttp(await employees.SetTerminationDateAsync(id, request.TerminationDate, ct));
 
-    private static Results<NoContent, NotFound, ProblemHttpResult> ToHttp(ChangeResult result)
-    {
-        if (result.NotFound) return TypedResults.NotFound();
-        if (result.Error is not null)
-            return TypedResults.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Not allowed", detail: result.Error);
-        return TypedResults.NoContent();
-    }
 }

@@ -48,6 +48,7 @@ app.MapHealthChecks("/health").AllowAnonymous();
 app.MapAuthEndpoints();
 app.MapMeEndpoints();
 app.MapMyRequestEndpoints();
+app.MapRequestReviewEndpoints();
 app.MapEmployeeEndpoints();
 
 app.Run();

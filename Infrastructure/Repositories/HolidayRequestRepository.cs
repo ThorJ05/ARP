@@ -20,6 +20,16 @@ public class HolidayRequestRepository(AppDbContext context) : IHolidayRequestRep
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<HolidayRequest>> GetByStatusAsync(IReadOnlyCollection<RequestStatus> statuses,
+        CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        return await db.GetTable<HolidayRequest>()
+            .Where(r => statuses.Contains(r.Status))
+            .OrderBy(r => r.CreatedAtUtc)
+            .ToListAsync(ct);
+    }
+
     public async Task<HolidayRequest?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var db = context.CreateLinqToDBConnection();
@@ -39,5 +49,24 @@ public class HolidayRequestRepository(AppDbContext context) : IHolidayRequestRep
             .Where(r => r.Id == id)
             .Set(r => r.Status, status)
             .UpdateAsync(ct);
+    }
+
+    public async Task SaveDecisionAsync(HolidayRequest request, IReadOnlyCollection<LedgerEntry> entries,
+        CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        await using var transaction = await db.BeginTransactionAsync(ct);
+
+        await db.GetTable<HolidayRequest>()
+            .Where(r => r.Id == request.Id)
+            .Set(r => r.Status, request.Status)
+            .Set(r => r.DecisionReason, request.DecisionReason)
+            .Set(r => r.DecidedByUserId, request.DecidedByUserId)
+            .Set(r => r.DecidedAtUtc, request.DecidedAtUtc)
+            .UpdateAsync(ct);
+        foreach (var entry in entries)
+            await db.InsertAsync(entry, token: ct);
+
+        await transaction.CommitAsync(ct);
     }
 }

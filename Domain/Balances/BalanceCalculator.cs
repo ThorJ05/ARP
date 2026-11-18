@@ -18,14 +18,16 @@ public record AccountBalanceAt(AccountType Type, DateOnly Date, IReadOnlyList<Ba
 }
 
 // Calculates a balance from the ledger entries, split by expiry date.
-// Used hours are taken from the holiday that expires first.
+// Used hours are taken from the holiday that expir es first.
 public static class BalanceCalculator
 {
+    
     public static AccountBalanceAt Calculate(AccountType type, IEnumerable<LedgerEntry> entries, DateOnly date)
     {
         var buckets = new SortedDictionary<DateOnly, decimal>();
 
-        foreach (var entry in entries.Where(e => e.Date <= date).OrderBy(e => e.Date).ThenBy(Order))
+        var counted = WithoutCancelledRequests(entries).Where(e => e.Date <= date);
+        foreach (var entry in counted.OrderBy(e => e.Date).ThenBy(Order))
             Apply(type, buckets, entry);
 
         var active = buckets
@@ -35,6 +37,20 @@ public static class BalanceCalculator
         var expired = buckets.Where(b => b.Key < date && b.Value > 0m).Sum(b => b.Value);
 
         return new AccountBalanceAt(type, date, active, expired);
+    }
+
+    // A cancelled request has both its usage and the cancellation in the ledger. Le aving out both gives
+    // the hours back to exactly the periods they were taken from.
+    private static IEnumerable<LedgerEntry> WithoutCancelledRequests(IEnumerable<LedgerEntry> entries)
+    {
+        var list = entries.ToList();
+        
+        var cancelled = list
+            .Where(e => e.Type == LedgerEntryType.Cancellation && e.RequestId is not null)
+            .Select(e => e.RequestId!.Value)
+            .ToHashSet();
+
+        return list.Where(e => e.RequestId is not { } id || !cancelled.Contains(id));
     }
 
     // on the same day: a conversion first (it changes what was there before), then earned hours, then used hours
@@ -48,6 +64,7 @@ public static class BalanceCalculator
         else if (entry.ExpiresOn is { } expiresOn)
             Add(buckets, expiresOn, entry.Hours);
         else if (entry.Hours >= 0m)
+            
             Add(buckets, HolidayPeriods.ExpiresOn(type, entry.Date), entry.Hours);
         else
             Use(type, buckets, entry);
@@ -67,6 +84,7 @@ public static class BalanceCalculator
             buckets[expiresOn] -= take;
             left -= take;
             if (left == 0m) return;
+            
         }
 
         // more than the balance: holiday debt in the current period
@@ -93,6 +111,7 @@ public static class BalanceCalculator
             buckets[targets[i].Key] += part;
             left -= part;
         }
+        
     }
 
     private static void Add(SortedDictionary<DateOnly, decimal> buckets, DateOnly expiresOn, decimal hours) =>
