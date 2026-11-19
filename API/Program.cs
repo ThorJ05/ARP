@@ -49,6 +49,7 @@ app.MapAuthEndpoints();
 app.MapMeEndpoints();
 app.MapMyRequestEndpoints();
 app.MapMyTransferEndpoints();
+app.MapReportEndpoints();
 app.MapRequestReviewEndpoints();
 app.MapEmployeeEndpoints();
 

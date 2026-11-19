@@ -186,6 +186,20 @@ export interface TransferRequestDto {
   comment?: string | null;
 }
 
+export interface HolidayReportRow {
+  name?: string;
+  /** @format date */
+  terminationDate?: string | null;
+  /** @format decimal */
+  expiredWeeks1To5?: number;
+  /** @format decimal */
+  expiredWeek6?: number;
+  /** @format decimal */
+  leftWeeks1To5?: number | null;
+  /** @format decimal */
+  leftWeek6?: number | null;
+}
+
 export interface QueueItemResponse {
   /** @format guid */
   id?: string;
@@ -709,6 +723,23 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reports
+     * @name GetHolidayReport
+     * @request GET:/api/reports/holiday
+     * @secure
+     */
+    getHolidayReport: (params: RequestParams = {}) =>
+      this.request<HolidayReportRow[], any>({
+        path: `/api/reports/holiday`,
+        method: "GET",
+        secure: true,
         format: "json",
         ...params,
       }),

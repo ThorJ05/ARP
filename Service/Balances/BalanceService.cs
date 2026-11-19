@@ -65,6 +65,18 @@ public class BalanceService(
             a => BalanceCalculator.Calculate(a.Type, entriesByAccount[a.Id], clock.Today).TotalHours);
     }
 
+    // Expired hours for every employee and account (for the accountant's report).
+    public async Task<IReadOnlyDictionary<(Guid EmployeeId, AccountType Type), decimal>> GetAllExpiredHoursAsync(
+        CancellationToken ct = default)
+    {
+        var data = await CatchUpAndLoadAsync(null, ct);
+        var entriesByAccount = data.Entries.ToLookup(e => e.AccountId);
+
+        return data.Accounts.ToDictionary(
+            a => (a.EmployeeId, a.Type),
+            a => BalanceCalculator.Calculate(a.Type, entriesByAccount[a.Id], clock.Today).ExpiredHours);
+    }
+
     // The last day holiday has been saved for (missing months are saved first). A new schedule or end
     // date before this day would change holiday that is already saved, so that isn't allowed.
     public async Task<DateOnly?> GetLastAccrualDateAsync(Guid employeeId, CancellationToken ct = default)
