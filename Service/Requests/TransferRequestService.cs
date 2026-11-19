@@ -17,7 +17,7 @@ public class TransferRequestService(
         transfers.GetForEmployeeAsync(employeeId, ct);
 
     // Saves the request as pending if it follows the rules. Null if the employee doesn't exist.
-    public async Task<CreatedTransfer?> CreateAsync(Guid employeeId, NewtransferRequest request, string? comment,
+    public async Task<CreatedTransfer?> CreateAsync(Guid employeeId, NewTransferRequest request, string? comment,
         CancellationToken ct = default)
     {
         // 1. Get the employee's data (accounts, ledger entries, rules)

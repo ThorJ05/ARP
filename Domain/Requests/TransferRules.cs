@@ -6,13 +6,13 @@ using BusinessEsbjerg.Holiday.Domain.Rules;
 
 namespace BusinessEsbjerg.Holiday.Domain.Requests;
 
-public record NewtransferRequest(AccountType Account, DateOnly FromPeriodStart, Decimal Hours);
+public record NewTransferRequest(AccountType Account, DateOnly FromPeriodStart, Decimal Hours);
 
 // Check a Transfer request before it's sent to the accountant
 public class TransferRules(Employee employee, IReadOnlyList<HolidayAccount> accounts, IReadOnlyList<LedgerEntry> entries, 
     IReadOnlyList<TransferRequest> otherTransfers, RuleSet rules, DateOnly today)
 {
-    public IReadOnlyList<string> Check(NewtransferRequest request)
+    public IReadOnlyList<string> Check(NewTransferRequest request)
     {
         var errors = new List<string>();
         if (!rules.GetBool(RuleKeys.TransferEnabled, today))
