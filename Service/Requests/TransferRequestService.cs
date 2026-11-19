@@ -24,15 +24,15 @@ public class TransferRequestService(
         var data = await balances.GetUpToDateDataAsync(employeeId, ct);
         if (data is null) return null;
 
-        // 2. Get the employee's other transfer requests (for check 6)
+        // 2. Get the employee's other transfer requests (to find duplicates)
         var others = await transfers.GetForEmployeeAsync(employeeId, ct);
 
-        // 3. Run your rules
+        // 3. Check the transfer rules (TransferRules in Domain)
         var rules = new TransferRules(data.Employee, data.Accounts, data.Entries, others, data.Rules, clock.Today);
         var errors = rules.Check(request);
         if (errors.Count > 0) return new CreatedTransfer(errors, null);
 
-        // 4. Build the new request, and save it
+        // 4. Save it. It starts as Pending until the accountant decides
         var saved = new TransferRequest
         {
             EmployeeId =  employeeId,

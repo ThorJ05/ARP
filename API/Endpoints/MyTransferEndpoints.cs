@@ -74,6 +74,7 @@ public static class MyTransferEndpoints
             principal.GetEmployeeId()!.Value, request.ToNewRequest(), request.Comment, ct);
 
         if (created is null) return TypedResults.NotFound();
+        // Broken rules come back as 400 with the messages, so the website can show them.
         if (created.TransferId is not { } id)
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {

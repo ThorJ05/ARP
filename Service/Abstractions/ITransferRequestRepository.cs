@@ -8,6 +8,7 @@ public interface ITransferRequestRepository
     Task<IReadOnlyList<TransferRequest>> GetByStatusAsync(IReadOnlyCollection<RequestStatus> statuses,
         CancellationToken ct = default);
     Task<TransferRequest?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    // Used for the employee's own list and to find duplicate pending requests.
     Task<IReadOnlyList<TransferRequest>> GetForEmployeeAsync(Guid employeeId, CancellationToken ct = default);
     Task AddAsync(TransferRequest request, CancellationToken ct = default);
     

@@ -46,6 +46,7 @@ public class TransferRequestRepository(AppDbContext context) : ITransferRequestR
         await transaction.CommitAsync(ct);
     }
 
+    // Newest first, so the latest request is at the top of the list.
     public async Task<IReadOnlyList<TransferRequest>> GetForEmployeeAsync(Guid employeeId, CancellationToken ct = default)
     {
         await using var db = context.CreateLinqToDBConnection();

@@ -12,6 +12,7 @@ import { errorMessage, isUnauthorized } from "../utils/errors";
 export function EmployeePage() {
   const { session, logout } = useAuth();
   const [requests, setRequests] = useState<MyRequestResponse[] | null>(null);
+  /** The employee's own transfer requests, shown in the table. */
   const [transfers, setTransfers] = useState<MyTransferResponse[] | null>(null);
   const [schedules, setSchedules] = useState<ScheduleResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export function EmployeePage() {
     }
   }, [fail]);
 
+  // Called again after a transfer is sent, so the new one shows up right away.
   const loadTransfers = useCallback(async () => {
     try {
       setTransfers((await api.api.getMyTransfers()).data);

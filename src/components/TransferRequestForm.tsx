@@ -24,6 +24,7 @@ export function TransferRequestForm({ onSent, onUnauthorized }: Props) {
     setError(null);
     setBusy(true);
     try {
+      // hours comes from the input as text, so it is converted to a number before sending.
       await api.api.createTransfer({ account, fromPeriodStart, hours: Number(hours), comment });
       setMessage(`Your request to transfer ${hours} hours was sent to the accountant.`);
       setFromPeriodStart("");
