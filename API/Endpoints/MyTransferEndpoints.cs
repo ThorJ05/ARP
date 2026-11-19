@@ -47,7 +47,7 @@ public static class MyTransferEndpoints
     public static void MapMyTransferEndpoints(this IEndpointRouteBuilder app)
     {
         // the employee id comes from the token, so employees only see and create their own requests
-        var group = app.MapGroup("/api/me/transfers{id}").WithTags("Me").RequireAuthorization(Policies.Employee);
+        var group = app.MapGroup("/api/me/transfers").WithTags("Me").RequireAuthorization(Policies.Employee);
 
         group.MapGet("/", GetMyTransfers)
             .WithName("GetMyTransfers")

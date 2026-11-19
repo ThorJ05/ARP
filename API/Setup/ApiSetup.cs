@@ -25,6 +25,7 @@ public static class ApiSetup
         services.AddScoped<BalanceService>();
         services.AddScoped<HolidayRequestService>();
         services.AddScoped<RequestReviewService>();
+        services.AddScoped<TransferRequestService>();
         services.AddScoped<DaysOffService>();
         return services;
     }
