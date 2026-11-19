@@ -8,6 +8,8 @@ public interface ITransferRequestRepository
     Task<IReadOnlyList<TransferRequest>> GetByStatusAsync(IReadOnlyCollection<RequestStatus> statuses,
         CancellationToken ct = default);
     Task<TransferRequest?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<IReadOnlyList<TransferRequest>> GetForEmployeeAsync(Guid employeeId, CancellationToken ct = default);
+    Task AddAsync(TransferRequest request, CancellationToken ct = default);
     
 
     // Saves the accountant's decision and the new ledger e ntries in one transaction.

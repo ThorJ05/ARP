@@ -45,4 +45,19 @@ public class TransferRequestRepository(AppDbContext context) : ITransferRequestR
 
         await transaction.CommitAsync(ct);
     }
+
+    public async Task<IReadOnlyList<TransferRequest>> GetForEmployeeAsync(Guid employeeId, CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        return await db.GetTable<TransferRequest>()
+            .Where(t => t.EmployeeId == employeeId)
+            .OrderByDescending(t => t.CreatedAtUtc)
+            .ToListAsync(ct);
+    }
+
+    public async Task AddAsync(TransferRequest request, CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        await db.InsertAsync(request, token: ct);
+    }
 }
