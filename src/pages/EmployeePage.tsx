@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useCallback, useEffect, useState } from "react";
 import type { MyRequestResponse, MyTransferResponse, ScheduleResponse } from "../api/api";
 import { api } from "../api/client";
@@ -63,6 +64,9 @@ export function EmployeePage() {
     <>
       <section className="card">
         <h2>Hi {session?.me.employeeName}</h2>
+        <p>
+          <Link to="/overview">Open the holiday overview</Link>
+        </p>
         <h3>My holiday balance</h3>
         <BalancePanel load={loadBalances} onUnauthorized={logout} />
       </section>

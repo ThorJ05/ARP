@@ -6,6 +6,7 @@ import { Layout } from "./components/Layout";
 import { AccountantPage } from "./pages/AccountantPage";
 import { EmployeePage } from "./pages/EmployeePage";
 import { LoginPage } from "./pages/LoginPage";
+import { OverviewPage } from "./pages/OverviewPage";
 import { SystemOwnerPage } from "./pages/SystemOwnerPage";
 
 export function App() {
@@ -20,6 +21,14 @@ export function App() {
               element={
                 <RequireRole role="Employee">
                   <EmployeePage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/overview"
+              element={
+                <RequireRole role="Employee">
+                  <OverviewPage />
                 </RequireRole>
               }
             />
