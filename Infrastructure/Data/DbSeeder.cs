@@ -51,7 +51,8 @@ public class DbSeeder(AppDbContext context, IPasswordHasher hasher)
             P(RuleKeys.TransferDeadlineWeek5, "12-31", "Transfer deadline, 5th week (MM-dd)"),
             P(RuleKeys.TransferDeadlineWeek6, "09-30", "Transfer deadline, week 6 (MM-dd)"),
             P(RuleKeys.HolidayDebtMaxDays, "5", "Holiday debt: maximum days the balance may be negative"),
-            P(RuleKeys.HolidayDebtSettleDate, "08-31", "Holiday debt: the balance must be 0 or positive on this date (MM-dd)")
+            P(RuleKeys.HolidayDebtSettleDate, "08-31", "Holiday debt: the balance must be 0 or positive on this date (MM-dd)"),
+            P(RuleKeys.IllnessWaitingDays, "5", "Illness during holiday: the first sick holiday days that are not given back")
         };
 
         foreach (var rule in rules)

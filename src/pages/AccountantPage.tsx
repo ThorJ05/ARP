@@ -2,6 +2,7 @@ import { useAuth } from "../auth/AuthContext";
 import { EmployeeAdmin } from "../components/EmployeeAdmin";
 import { RequestQueue } from "../components/RequestQueue";
 import { HolidayReport } from "../components/HolidayReport";
+import { IllnessForm } from "../components/IllnessForm";
 
 export function AccountantPage() {
   const { logout } = useAuth();
@@ -20,6 +21,11 @@ export function AccountantPage() {
             <p className="muted">Expired hours must be paid out. Employees with a last day must have their remaining hours settled.</p>
             <HolidayReport onUnauthorized={logout} />
         </section>
+      <section className="card wide">
+        <h2>Illness during holiday</h2>
+        <p className="muted">Sick days during approved holiday are given back, except the first 5 (waiting days).</p>
+        <IllnessForm onUnauthorized={logout} />
+      </section>
       <EmployeeAdmin canSetEndDate={false} />
     </>
   );

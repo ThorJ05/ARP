@@ -200,6 +200,31 @@ export interface HolidayReportRow {
   leftWeek6?: number | null;
 }
 
+export interface ApprovedHolidayResponse {
+  /** @format guid */
+  id?: string;
+  employeeName?: string;
+  account?: string;
+  /** @format date */
+  startDate?: string;
+  /** @format date */
+  endDate?: string;
+  /** @format decimal */
+  hours?: number;
+}
+
+export interface IllnessResponse {
+  /** @format decimal */
+  hoursGivenBack?: number;
+}
+
+export interface IllnessDto {
+  /** @format date */
+  firstSickDay?: string;
+  /** @format date */
+  lastSickDay?: string;
+}
+
 export interface QueueItemResponse {
   /** @format guid */
   id?: string;
@@ -740,6 +765,46 @@ export class Api<
         path: `/api/reports/holiday`,
         method: "GET",
         secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Illness
+     * @name GetApprovedHoliday
+     * @request GET:/api/illness/holidays
+     * @secure
+     */
+    getApprovedHoliday: (params: RequestParams = {}) =>
+      this.request<ApprovedHolidayResponse[], any>({
+        path: `/api/illness/holidays`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Illness
+     * @name RegisterIllness
+     * @request POST:/api/illness/holidays/{id}
+     * @secure
+     */
+    registerIllness: (
+      id: string,
+      data: IllnessDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<IllnessResponse, HttpValidationProblemDetails | void>({
+        path: `/api/illness/holidays/${id}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

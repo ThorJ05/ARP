@@ -30,6 +30,7 @@ public static class ApiSetup
         services.AddScoped<TransferRequestService>();
         services.AddScoped<DaysOffService>();
         services.AddScoped<ReportService>();
+        services.AddScoped<IllnessService>();
         return services;
     }
 
