@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
-import type { MyRequestResponse, ScheduleResponse } from "../api/api";
+import type { MyRequestResponse, MyTransferResponse, ScheduleResponse } from "../api/api";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { BalancePanel } from "../components/balance";
 import { HolidayRequestForm } from "../components/HolidayRequestForm";
 import { MyRequests } from "../components/MyRequests";
+import { MyTransfers } from "../components/MyTransfers";
 import { ScheduleTable } from "../components/schedule";
+import { TransferRequestForm } from "../components/TransferRequestForm";
 import { errorMessage, isUnauthorized } from "../utils/errors";
 
 export function EmployeePage() {
   const { session, logout } = useAuth();
   const [requests, setRequests] = useState<MyRequestResponse[] | null>(null);
+  const [transfers, setTransfers] = useState<MyTransferResponse[] | null>(null);
   const [schedules, setSchedules] = useState<ScheduleResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,13 +32,22 @@ export function EmployeePage() {
     }
   }, [fail]);
 
+  const loadTransfers = useCallback(async () => {
+    try {
+      setTransfers((await api.api.getMyTransfers()).data);
+    } catch (err) {
+      fail(err);
+    }
+  }, [fail]);
+
   useEffect(() => {
     void loadRequests();
+    void loadTransfers();
     api.api
       .getMySchedules()
       .then(({ data }) => setSchedules(data))
       .catch(fail);
-  }, [loadRequests, fail]);
+  }, [loadRequests, loadTransfers, fail]);
 
   async function cancel(request: MyRequestResponse) {
     setError(null);
@@ -68,6 +80,16 @@ export function EmployeePage() {
           </p>
         )}
         {requests && <MyRequests requests={requests} onCancel={(r) => void cancel(r)} />}
+      </section>
+
+      <section className="card">
+        <h3>Transfer holiday to the next period</h3>
+        <TransferRequestForm onSent={() => void loadTransfers()} onUnauthorized={logout} />
+      </section>
+
+      <section className="card wide">
+        <h3>My transfer requests</h3>
+        {transfers && <MyTransfers transfers={transfers} />}
       </section>
 
       <section className="card wide">

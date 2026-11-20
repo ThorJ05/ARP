@@ -22,7 +22,8 @@ public enum LedgerEntryType
     Payout,             // (-) hours paid out by payroll (we don't store the amount)
     Correction,         // manual fix
     ScheduleConversion, // balance changed because the work schedule changed
-    Cancellation        // (+) approved holiday that was cancelled, gives the hours back
+    Cancellation,       // (+) approved holiday that was cancelled, gives the hours back
+    Illness             // (+) holiday days given back because the employee was ill during the holiday
 }
 
 

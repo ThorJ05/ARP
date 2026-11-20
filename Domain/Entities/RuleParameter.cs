@@ -29,4 +29,5 @@ public static class RuleKeys
     public const string TransferDeadlineWeek6 = "transfer.deadline_week6";            // 09-30
     public const string HolidayDebtMaxDays = "holiday_debt.max_days";                 // 5
     public const string HolidayDebtSettleDate = "holiday_debt.settle_date";           // 08-31
+    public const string IllnessWaitingDays = "illness.waiting_days";                  // 5
 }

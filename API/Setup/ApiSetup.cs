@@ -3,6 +3,7 @@ using BusinessEsbjerg.Holiday.Service.Auth;
 using BusinessEsbjerg.Holiday.Service.Balances;
 using BusinessEsbjerg.Holiday.Service.Calendar;
 using BusinessEsbjerg.Holiday.Service.Employees;
+using BusinessEsbjerg.Holiday.Service.Reports;
 using BusinessEsbjerg.Holiday.Service.Requests;
 using BusinessEsbjerg.Holiday.Service.Schedules;
 using BusinessEsbjerg.Holiday.Service.Users;
@@ -25,7 +26,10 @@ public static class ApiSetup
         services.AddScoped<BalanceService>();
         services.AddScoped<HolidayRequestService>();
         services.AddScoped<RequestReviewService>();
+        services.AddScoped<TransferRequestService>();
         services.AddScoped<DaysOffService>();
+        services.AddScoped<ReportService>();
+        services.AddScoped<IllnessService>();
         return services;
     }
 

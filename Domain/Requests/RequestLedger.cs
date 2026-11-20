@@ -35,6 +35,19 @@ public static class RequestLedger
             })
             .ToList();
 
+    // illness during approved holiday: the hours of the sick days are given back as holiday
+    public static IReadOnlyList<LedgerEntry> Illness(HolidayRequest request, IEnumerable<LedgerEntry> sickDays) =>
+        sickDays.Select(e => new LedgerEntry
+            {
+                AccountId = e.AccountId,
+                Type = LedgerEntryType.Illness,
+                Hours = -e.Hours,
+                Date = e.Date,
+                RequestId = request.Id,
+                Reason = "Given back because of illness"
+            })
+            .ToList();
+
     // approved transfer: the hours leave the period they were earned in and get the next period's expiry date
     public static IReadOnlyList<LedgerEntry> Transfer(TransferRequest transfer, Guid accountId, DateOnly today)
     {

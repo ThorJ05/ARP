@@ -1,5 +1,7 @@
 import { useAuth } from "../auth/AuthContext";
 import { EmployeeAdmin } from "../components/EmployeeAdmin";
+import { HolidayReport } from "../components/HolidayReport";
+import { IllnessForm } from "../components/IllnessForm";
 import { RequestQueue } from "../components/RequestQueue";
 
 export function AccountantPage() {
@@ -13,6 +15,20 @@ export function AccountantPage() {
           Balance is the balance on the last day of the holiday, with earned and approved holiday included.
         </p>
         <RequestQueue onUnauthorized={logout} />
+      </section>
+
+      <section className="card wide">
+        <h2>Holiday to settle</h2>
+        <p className="muted">
+          Expired hours must be paid out. Employees with a last day must have their remaining hours settled.
+        </p>
+        <HolidayReport onUnauthorized={logout} />
+      </section>
+
+      <section className="card wide">
+        <h2>Illness during holiday</h2>
+        <p className="muted">Sick days during approved holiday are given back, except the first 5 (waiting days).</p>
+        <IllnessForm onUnauthorized={logout} />
       </section>
 
       <EmployeeAdmin canSetEndDate={false} />

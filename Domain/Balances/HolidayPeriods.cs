@@ -24,6 +24,14 @@ public static class HolidayPeriods
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 
+    // The first day of the earning period the date is in: 1 September for weeks 1-5, 1 January for week 6.
+    public static DateOnly PeriodStart(AccountType type, DateOnly date) => type switch
+    {
+        AccountType.Weeks1To5 => new DateOnly(EarningYearStart(date), 9, 1),
+        AccountType.Week6 => new DateOnly(date.Year, 1, 1),
+        _ => throw new ArgumentOutOfRangeException(nameof(type))
+    };
+
     // the earning year for weeks 1-5 starts on 1 September
     private static int EarningYearStart(DateOnly date) => date.Month >= 9 ? date.Year : date.Year - 1;
 }

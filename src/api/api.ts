@@ -157,6 +157,74 @@ export interface CreatedRequestResponse {
   hours?: number;
 }
 
+export interface MyTransferResponse {
+  /** @format guid */
+  id?: string;
+  account?: string;
+  /** @format date */
+  fromPeriodStart?: string;
+  /** @format decimal */
+  hours?: number;
+  status?: string;
+  comment?: string | null;
+  decisionReason?: string | null;
+  /** @format date-time */
+  createdAtUtc?: string;
+}
+
+export interface CreatedTransferResponse {
+  /** @format guid */
+  id?: string;
+}
+
+export interface TransferRequestDto {
+  account?: string;
+  /** @format date */
+  fromPeriodStart?: string;
+  /** @format decimal */
+  hours?: number;
+  comment?: string | null;
+}
+
+export interface HolidayReportRow {
+  name?: string;
+  /** @format date */
+  terminationDate?: string | null;
+  /** @format decimal */
+  expiredWeeks1To5?: number;
+  /** @format decimal */
+  expiredWeek6?: number;
+  /** @format decimal */
+  leftWeeks1To5?: number | null;
+  /** @format decimal */
+  leftWeek6?: number | null;
+}
+
+export interface ApprovedHolidayResponse {
+  /** @format guid */
+  id?: string;
+  employeeName?: string;
+  account?: string;
+  /** @format date */
+  startDate?: string;
+  /** @format date */
+  endDate?: string;
+  /** @format decimal */
+  hours?: number;
+}
+
+export interface IllnessResponse {
+  /** @format decimal */
+  hoursGivenBack?: number;
+}
+
+export interface IllnessDto {
+  /** @format date */
+  firstSickDay?: string;
+  /** @format date */
+  lastSickDay?: string;
+}
+
 export interface QueueItemResponse {
   /** @format guid */
   id?: string;
@@ -642,6 +710,102 @@ export class Api<
         path: `/api/me/requests/${id}/cancel`,
         method: "POST",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Me
+     * @name GetMyTransfers
+     * @request GET:/api/me/transfers
+     * @secure
+     */
+    getMyTransfers: (params: RequestParams = {}) =>
+      this.request<MyTransferResponse[], any>({
+        path: `/api/me/transfers`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Me
+     * @name CreateTransfer
+     * @request POST:/api/me/transfers
+     * @secure
+     */
+    createTransfer: (data: TransferRequestDto, params: RequestParams = {}) =>
+      this.request<
+        CreatedTransferResponse,
+        HttpValidationProblemDetails | void
+      >({
+        path: `/api/me/transfers`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reports
+     * @name GetHolidayReport
+     * @request GET:/api/reports/holiday
+     * @secure
+     */
+    getHolidayReport: (params: RequestParams = {}) =>
+      this.request<HolidayReportRow[], any>({
+        path: `/api/reports/holiday`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Illness
+     * @name GetApprovedHoliday
+     * @request GET:/api/illness/holidays
+     * @secure
+     */
+    getApprovedHoliday: (params: RequestParams = {}) =>
+      this.request<ApprovedHolidayResponse[], any>({
+        path: `/api/illness/holidays`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Illness
+     * @name RegisterIllness
+     * @request POST:/api/illness/holidays/{id}
+     * @secure
+     */
+    registerIllness: (
+      id: string,
+      data: IllnessDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<IllnessResponse, HttpValidationProblemDetails | void>({
+        path: `/api/illness/holidays/${id}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 

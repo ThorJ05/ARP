@@ -170,8 +170,8 @@ public class HolidayRequestRules(
     private static LedgerEntry Usage(Guid accountId, HolidayDay day) =>
         new() { AccountId = accountId, Type = LedgerEntryType.Usage, Hours = -day.Hours, Date = day.Date };
 
-    // rule values like "08-31"
-    private static DateOnly DateInYear(string monthDay, int year) =>
+    // rule values like "08-31". internal so TransferRules can reuse it for the deadline.
+    internal static DateOnly DateInYear(string monthDay, int year) =>
         DateOnly.ParseExact($"{year}-{monthDay}", "yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     private static string Format(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
