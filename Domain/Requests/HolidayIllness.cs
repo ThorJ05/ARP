@@ -16,12 +16,13 @@ public class HolidayIllness(HolidayRequest request, IReadOnlyList<LedgerEntry> e
         if (lastSickDay < firstSickDay)
             errors.Add("The last sick day can't be before the first.");
         if (firstSickDay < request.StartDate || lastSickDay > request.EndDate)
-            errors.Add($"The sick days must be within the holiday ({request.StartDate:dd-MM-yyyy} to {request.EndDate:dd-MM-yyyy}).");
+            errors.Add($"The sick days must be within the holiday " +
+                       $"({request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd}).");
 
         if (errors.Count == 0 && DaysToGiveBack(firstSickDay, lastSickDay).Count == 0)
         {
-            var waitingDays = WaitingDays(firstSickDay);
-            errors.Add($"Nothing to give back. The first {waitingDays} sick holiday days are not given back, and days already given back can't be given back again.");
+            errors.Add($"Nothing to give back. The first {WaitingDays(firstSickDay)} sick holiday days are not given " +
+                       "back, and days already given back can't be given back again.");
         }
 
         return errors;

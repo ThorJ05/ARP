@@ -55,7 +55,8 @@ public static class IllnessEndpoints
         var result = await illness.RegisterAsync(id, request.FirstSickDay, request.LastSickDay, ct);
         if (result.Change.NotFound) return TypedResults.NotFound();
         if (result.Change.Error is { } error)
-            return TypedResults.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Not allowed", detail: error);
+            return TypedResults.Problem(
+                statusCode: StatusCodes.Status400BadRequest, title: "Not allowed", detail: error);
         return TypedResults.Ok(new IllnessResponse(result.HoursGivenBack));
     }
 }

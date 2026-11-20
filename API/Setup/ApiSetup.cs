@@ -25,8 +25,7 @@ public static class ApiSetup
         services.AddScoped<ScheduleService>();
         services.AddScoped<BalanceService>();
         services.AddScoped<HolidayRequestService>();
-        services.AddScoped<RequestReviewService>(); 
-        // Registered so the endpoints can get the services through dependency injection.
+        services.AddScoped<RequestReviewService>();
         services.AddScoped<TransferRequestService>();
         services.AddScoped<DaysOffService>();
         services.AddScoped<ReportService>();

@@ -13,7 +13,7 @@ public interface ITransferRequestRepository
     Task AddAsync(TransferRequest request, CancellationToken ct = default);
     
 
-    // Saves the accountant's decision and the new ledger e ntries in one transaction.
+    // Saves the accountant's decision and the new ledger entries in one transaction.
     Task SaveDecisionAsync(TransferRequest transfer, IReadOnlyCollection<LedgerEntry> entries,
         CancellationToken ct = default);
 }
