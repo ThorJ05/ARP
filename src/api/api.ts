@@ -200,6 +200,47 @@ export interface HolidayReportRow {
   leftWeek6?: number | null;
 }
 
+export interface TeamOverviewResponse {
+  /** @format int32 */
+  year?: number;
+  /** @format int32 */
+  month?: number;
+  daysOff?: string[];
+  rows?: TeamRowResponse[];
+  absentPerDay?: AbsenceCountResponse[];
+}
+
+export interface TeamRowResponse {
+  /** @format guid */
+  employeeId?: string;
+  name?: string;
+  isMe?: boolean;
+  absentDays?: string[];
+}
+
+export interface AbsenceCountResponse {
+  /** @format date */
+  date?: string;
+  /** @format int32 */
+  absent?: number;
+}
+
+export interface MyCalendarResponse {
+  /** @format int32 */
+  year?: number;
+  /** @format int32 */
+  month?: number;
+  daysOff?: string[];
+  days?: MyCalendarDayResponse[];
+}
+
+export interface MyCalendarDayResponse {
+  /** @format date */
+  date?: string;
+  status?: string;
+  account?: string;
+}
+
 export interface ApprovedHolidayResponse {
   /** @format guid */
   id?: string;
@@ -764,6 +805,58 @@ export class Api<
       this.request<HolidayReportRow[], any>({
         path: `/api/reports/holiday`,
         method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Overview
+     * @name GetTeamOverview
+     * @request GET:/api/overview/team
+     * @secure
+     */
+    getTeamOverview: (
+      query: {
+        /** @format int32 */
+        year: number;
+        /** @format int32 */
+        month: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<TeamOverviewResponse, ProblemDetails>({
+        path: `/api/overview/team`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Overview
+     * @name GetMyCalendar
+     * @request GET:/api/overview/me
+     * @secure
+     */
+    getMyCalendar: (
+      query: {
+        /** @format int32 */
+        year: number;
+        /** @format int32 */
+        month: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<MyCalendarResponse, ProblemDetails | void>({
+        path: `/api/overview/me`,
+        method: "GET",
+        query: query,
         secure: true,
         format: "json",
         ...params,
