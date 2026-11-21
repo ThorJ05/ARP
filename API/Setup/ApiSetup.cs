@@ -34,6 +34,7 @@ public static class ApiSetup
         services.AddScoped<OverviewService>();
         services.AddScoped<IllnessService>();
         services.AddScoped<RuleService>();
+        services.AddScoped<CompanyDaysOffService>();
         return services;
     }
 
