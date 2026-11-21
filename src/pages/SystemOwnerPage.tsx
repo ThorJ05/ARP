@@ -3,6 +3,7 @@ import { CreateEmployeeForm } from "../components/CreateEmployeeForm";
 import { EmployeeAdmin } from "../components/EmployeeAdmin";
 import { useAuth } from "../auth/AuthContext";
 import { RulesAdmin } from "../components/RulesAdmin";
+import { CompanyDaysOff } from "../components/CompanyDaysOff";
 
 export function SystemOwnerPage() {
     const {logout}= useAuth();
@@ -21,6 +22,10 @@ export function SystemOwnerPage() {
         <h3>Global rules and company days off</h3>
         <RulesAdmin onUnauthorized={logout} />
       </section>
+        <section className="card wide">
+            <h3>Company days off</h3>
+            <CompanyDaysOff onUnauthorized={logout} />
+        </section>
     </>
   );
 }

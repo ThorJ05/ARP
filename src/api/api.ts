@@ -284,6 +284,21 @@ export interface RuleChangeDto {
   effectiveFrom?: string;
 }
 
+export interface CalendarDayResponse {
+  /** @format guid */
+  id?: string | null;
+  /** @format date */
+  date?: string;
+  name?: string;
+  isPublicHoliday?: boolean;
+}
+
+export interface NewCompanyDayOffDto {
+  /** @format date */
+  date?: string;
+  name?: string;
+}
+
 export interface QueueItemResponse {
   /** @format guid */
   id?: string;
@@ -956,6 +971,64 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Days off
+     * @name GetDaysOff
+     * @request GET:/api/days-off
+     * @secure
+     */
+    getDaysOff: (
+      query: {
+        /** @format int32 */
+        year: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<CalendarDayResponse[], any>({
+        path: `/api/days-off`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Days off
+     * @name AddCompanyDayOff
+     * @request POST:/api/days-off
+     * @secure
+     */
+    addCompanyDayOff: (data: NewCompanyDayOffDto, params: RequestParams = {}) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/days-off`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Days off
+     * @name DeleteCompanyDayOff
+     * @request DELETE:/api/days-off/{id}
+     * @secure
+     */
+    deleteCompanyDayOff: (id: string, params: RequestParams = {}) =>
+      this.request<void, void>({
+        path: `/api/days-off/${id}`,
+        method: "DELETE",
+        secure: true,
         ...params,
       }),
 
