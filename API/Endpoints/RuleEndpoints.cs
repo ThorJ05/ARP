@@ -1,6 +1,6 @@
-using System.Data;
 using BusinessEsbjerg.Holiday.Api.Auth;
 using BusinessEsbjerg.Holiday.Api.Validation;
+using BusinessEsbjerg.Holiday.Domain.Rules;
 using BusinessEsbjerg.Holiday.Service.Rules;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -28,6 +28,24 @@ public class RuleChangeDtoValidator : AbstractValidator<RuleChangeDto>
     }
 }
 
+public record RulePresetResponse(string Id, string Name, string Description, Dictionary<string, string> Values)
+{
+    public static RulePresetResponse From(RulePreset p) =>
+        new(p.Id, p.Name, p.Description, p.Values.ToDictionary());
+}
+
+// Which date the preset's values apply from.
+public record ApplyPresetDto(DateOnly EffectiveFrom);
+
+public class ApplyPresetDtoValidator : AbstractValidator<ApplyPresetDto>
+{
+    public ApplyPresetDtoValidator()
+    {
+        RuleFor(x => x.EffectiveFrom).NotEmpty();
+    }
+}
+
+
 public static class RuleEndpoints
 {
     public static void MapRuleEndpoints(this IEndpointRouteBuilder app)
@@ -43,6 +61,16 @@ public static class RuleEndpoints
             .ProducesValidationProblem()
             .WithName("ChangeRule")
             .WithSummary("Add a new value for a rule from a start date (old values are kept)");
+        
+        group.MapGet("/presets", GetPresets)
+            .WithName("GetRulePresets")
+            .WithSummary("The rule presets the system owner can apply");
+
+        group.MapPost("/presets/{id}", ApplyPreset)
+            .WithValidation<ApplyPresetDto>()
+            .ProducesValidationProblem()
+            .WithName("ApplyRulePreset")
+            .WithSummary("Apply a preset from a start date (adds new values, old values are kept)");
     }
 
     // return all rules as RuleResponse
@@ -53,4 +81,11 @@ public static class RuleEndpoints
         RuleChangeDto change,
         RuleService rules, CancellationToken ct) =>
         ChangeResults.ToHttp(await rules.ChangeAsync(key, change.Value, change.EffectiveFrom, ct));
+    
+    private static Ok<List<RulePresetResponse>> GetPresets(RuleService rules) =>
+        TypedResults.Ok(rules.GetPresets().Select(RulePresetResponse.From).ToList());
+
+    private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> ApplyPreset(string id,
+        ApplyPresetDto apply, RuleService rules, CancellationToken ct) =>
+        ChangeResults.ToHttp(await rules.ApplyPresetAsync(id, apply.EffectiveFrom, ct));
 }
