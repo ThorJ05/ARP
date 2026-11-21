@@ -52,6 +52,7 @@ app.MapMyTransferEndpoints();
 app.MapReportEndpoints();
 app.MapOverviewEndpoints();
 app.MapIllnessEndpoints();
+app.MapRuleEndpoints();
 app.MapRequestReviewEndpoints();
 app.MapEmployeeEndpoints();
 

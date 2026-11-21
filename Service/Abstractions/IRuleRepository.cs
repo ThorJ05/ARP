@@ -1,4 +1,5 @@
-﻿using BusinessEsbjerg.Holiday.Domain.Entities;
+﻿using System.Data;
+using BusinessEsbjerg.Holiday.Domain.Entities;
 
 namespace BusinessEsbjerg.Holiday.Service.Abstractions;
 
@@ -6,4 +7,5 @@ namespace BusinessEsbjerg.Holiday.Service.Abstractions;
 public interface IRuleRepository
 {
     Task<IReadOnlyList<RuleParameter>>  GetAllAsync(CancellationToken ct = default);
+    Task AddAsync(RuleParameter rule, CancellationToken ct = default);
 }

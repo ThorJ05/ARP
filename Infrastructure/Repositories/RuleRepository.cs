@@ -15,4 +15,13 @@ public class RuleRepository(AppDbContext context) : IRuleRepository
         await using var db = context.CreateLinqToDBConnection();
         return await db.GetTable<RuleParameter>().ToListAsync(ct);
     }
+
+    
+    // New values are always added as a new row, old rows are never changed (so the history is kept).
+    public async Task AddAsync(RuleParameter rule, CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        await db.InsertAsync(rule, token: ct);
+    }
+    
 }
