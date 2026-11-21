@@ -266,6 +266,24 @@ export interface IllnessDto {
   lastSickDay?: string;
 }
 
+export interface RuleResponse {
+  key?: string;
+  description?: string | null;
+  values?: RuleValueResponse[];
+}
+
+export interface RuleValueResponse {
+  value?: string;
+  /** @format date */
+  effectiveFrom?: string;
+}
+
+export interface RuleChangeDto {
+  value?: string;
+  /** @format date */
+  effectiveFrom?: string;
+}
+
 export interface QueueItemResponse {
   /** @format guid */
   id?: string;
@@ -899,6 +917,45 @@ export class Api<
         secure: true,
         type: ContentType.Json,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags rules
+     * @name GetRules
+     * @request GET:/api/rules
+     * @secure
+     */
+    getRules: (params: RequestParams = {}) =>
+      this.request<RuleResponse[], any>({
+        path: `/api/rules`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags rules
+     * @name ChangeRule
+     * @request POST:/api/rules/{key}
+     * @secure
+     */
+    changeRule: (
+      key: string,
+      data: RuleChangeDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/rules/${key}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 
