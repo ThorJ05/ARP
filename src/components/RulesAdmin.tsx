@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import type { RuleResponse } from "../api/api";
 import { api } from "../api/client";
 import { errorMessage, isUnauthorized } from "../utils/errors";
+import type { RulePresetResponse, RuleResponse } from "../api/api";
 
 interface Props {
     onUnauthorized: () => void;
@@ -16,6 +16,9 @@ export function RulesAdmin({ onUnauthorized }: Props) {
     const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    const [presets, setPresets] = useState<RulePresetResponse[]>([]);
+    const [presetId, setPresetId] = useState("");
+    const [presetFrom, setPresetFrom] = useState("");
     const fail = useCallback(
         (err: unknown) => (isUnauthorized(err) ? onUnauthorized() : setError(errorMessage(err))),
         [onUnauthorized],
@@ -24,6 +27,7 @@ export function RulesAdmin({ onUnauthorized }: Props) {
     const load = useCallback(async () => {
         try {
             setRules((await api.api.getRules()).data);
+            setPresets((await api.api.getRulePresets()).data);
         } catch (err) {
             fail(err);
         }
@@ -51,11 +55,42 @@ export function RulesAdmin({ onUnauthorized }: Props) {
             fail(err);
         }
     }
+    async function applyPreset(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setMessage(null);
+        setError(null);
+        try {
+            await api.api.applyRulePreset(presetId, { effectiveFrom: presetFrom });
+            setMessage(`The preset was applied from ${presetFrom}.`);
+            setPresetId("");
+            setPresetFrom("");
+            await load();
+        } catch (err) {
+            fail(err);
+        }
+    }
 
     if (!rules) return null;
 
     return (
         <>
+            <form className="form" onSubmit={applyPreset}>
+                <label>
+                    Preset
+                    <select value={presetId} onChange={(e) => setPresetId(e.target.value)} required>
+                        <option value="" disabled>Choose a preset</option>
+                        {presets.map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+                </label>
+                <label>
+                    From
+                    <input type="date" value={presetFrom} onChange={(e) => setPresetFrom(e.target.value)} required />
+                </label>
+                <button type="submit" disabled={!presetId}>Apply preset</button>
+            </form>
+
             <form className="form" onSubmit={submit}>
                 <label>
                     Rule

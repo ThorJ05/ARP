@@ -284,6 +284,18 @@ export interface RuleChangeDto {
   effectiveFrom?: string;
 }
 
+export interface RulePresetResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  values?: Record<string, string>;
+}
+
+export interface ApplyPresetDto {
+  /** @format date */
+  effectiveFrom?: string;
+}
+
 export interface CalendarDayResponse {
   /** @format guid */
   id?: string | null;
@@ -967,6 +979,45 @@ export class Api<
     ) =>
       this.request<void, HttpValidationProblemDetails | void>({
         path: `/api/rules/${key}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags rules
+     * @name GetRulePresets
+     * @request GET:/api/rules/presets
+     * @secure
+     */
+    getRulePresets: (params: RequestParams = {}) =>
+      this.request<RulePresetResponse[], any>({
+        path: `/api/rules/presets`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags rules
+     * @name ApplyRulePreset
+     * @request POST:/api/rules/presets/{id}
+     * @secure
+     */
+    applyRulePreset: (
+      id: string,
+      data: ApplyPresetDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/rules/presets/${id}`,
         method: "POST",
         body: data,
         secure: true,
