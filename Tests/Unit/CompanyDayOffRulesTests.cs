@@ -22,7 +22,7 @@ public class CompanyDayOffRulesTests
         CompanyDayOffRules.CheckAdd(date, "Company trip", Today, [], holidays);
 
     [Fact]
-    public void A_future_day_with_no_holiday_on_it_can_be_added()
+    public void Future_day_can_be_added()
     {
         Assert.Empty(Add(TripDay));
     }
@@ -31,7 +31,7 @@ public class CompanyDayOffRulesTests
     [InlineData(RequestStatus.Approved)]
     [InlineData(RequestStatus.Pending)]
     [InlineData(RequestStatus.CancellationRequested)]
-    public void A_day_off_inside_waiting_or_approved_holiday_is_rejected(RequestStatus status)
+    public void Blocked_by_holiday(RequestStatus status)
     {
         Assert.Contains(Add(TripDay, Holiday(status)), e => e.Contains("holiday covers that date"));
     }
@@ -39,25 +39,25 @@ public class CompanyDayOffRulesTests
     [Theory]
     [InlineData(RequestStatus.Rejected)]
     [InlineData(RequestStatus.Cancelled)]
-    public void Declined_or_cancelled_holiday_does_not_block_a_day_off(RequestStatus status)
+    public void Declined_holiday_doesnt_block(RequestStatus status)
     {
         Assert.Empty(Add(TripDay, Holiday(status)));
     }
 
     [Fact]
-    public void Today_or_earlier_is_rejected()
+    public void Past_date_rejected()
     {
         Assert.Contains(Add(Today), e => e.Contains("after today"));
     }
 
     [Fact]
-    public void A_public_holiday_is_rejected()
+    public void Public_holiday_rejected()
     {
         Assert.Contains(Add(new DateOnly(2027, 12, 25)), e => e.Contains("public holiday"));
     }
 
     [Fact]
-    public void Two_days_off_on_the_same_date_are_rejected()
+    public void Duplicate_date_rejected()
     {
         var existing = new CompanyDayOff { Date = TripDay, Name = "Trip" };
 
@@ -67,7 +67,7 @@ public class CompanyDayOffRulesTests
     }
 
     [Fact]
-    public void A_day_off_inside_approved_holiday_cant_be_removed()
+    public void Cant_remove_inside_holiday()
     {
         var day = new CompanyDayOff { Date = TripDay, Name = "Trip" };
 
@@ -77,7 +77,7 @@ public class CompanyDayOffRulesTests
     }
 
     [Fact]
-    public void A_future_day_off_with_no_holiday_on_it_can_be_removed()
+    public void Future_day_can_be_removed()
     {
         var day = new CompanyDayOff { Date = TripDay, Name = "Trip" };
 
@@ -85,7 +85,7 @@ public class CompanyDayOffRulesTests
     }
 
     [Fact]
-    public void A_missing_or_past_day_off_cant_be_removed()
+    public void Cant_remove_missing_or_past()
     {
         Assert.NotEmpty(CompanyDayOffRules.CheckRemove(null, Today, []));
         Assert.NotEmpty(CompanyDayOffRules.CheckRemove(

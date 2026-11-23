@@ -9,6 +9,7 @@ namespace BusinessEsbjerg.Holiday.Tests.Unit;
 public class HolidayRequestRulesTests
 {
     private static readonly DateOnly Today = new(2026, 11, 18);
+    private static readonly HashSet<DateOnly> PublicHolidays2027 = [..DanishPublicHolidays.In(2027)];
 
     // hired 1 Sep 2025, so there is a full year of holiday behind
     private static readonly Employee Anna = FullTimeEmployee(new DateOnly(2025, 9, 1));
@@ -16,97 +17,153 @@ public class HolidayRequestRulesTests
     // hired 2 Nov 2026, so there is almost nothing earned yet
     private static readonly Employee Dan = FullTimeEmployee(new DateOnly(2026, 11, 2));
 
-    private static RequestCheck Check(Employee employee, AccountType account, string start, string end,
-        IReadOnlyList<HolidayRequest>? otherRequests = null)
-    {
-        var daysOff = new HashSet<DateOnly>(DanishPublicHolidays.In(2027));
-        var rules = new HolidayRequestRules(
-            employee, Accounts(employee), [], otherRequests ?? [], Rules(), daysOff, Today);
-        return rules.Check(new NewHolidayRequest(account, DateOnly.Parse(start), DateOnly.Parse(end)));
-    }
+    // the rules for one employee, with no ledger entries saved yet (everything earned is worked out from the hire date)
+    private static HolidayRequestRules RulesFor(Employee employee, params HolidayRequest[] otherRequests) =>
+        new(employee, Accounts(employee), [], otherRequests, Rules(), PublicHolidays2027, Today);
+
+    private static NewHolidayRequest Weeks1To5(DateOnly start, DateOnly end) =>
+        new(AccountType.Weeks1To5, start, end);
 
     [Fact]
-    public void A_normal_week_costs_37_hours()
+    public void Week_costs_37_hours()
     {
-        var check = Check(Anna, AccountType.Weeks1To5, "2027-01-11", "2027-01-15");
+        // Arrange
+        var rules = RulesFor(Anna);
+        var request = Weeks1To5(new DateOnly(2027, 1, 11), new DateOnly(2027, 1, 15));
 
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
         Assert.True(check.IsValid);
         Assert.Equal(5, check.WorkingDays);
         Assert.Equal(37m, check.Hours);
     }
 
     [Fact]
-    public void Weekends_and_public_holidays_are_free()
+    public void Holidays_are_free()
     {
-        // Easter 2027: Thursday 25, Friday 26 and Monday 29 March are public holidays
-        var check = Check(Anna, AccountType.Weeks1To5, "2027-03-22", "2027-03-31");
+        // Arrange: Easter 2027, Thursday 25, Friday 26 and Monday 29 March are public holidays
+        var rules = RulesFor(Anna);
+        var request = Weeks1To5(new DateOnly(2027, 3, 22), new DateOnly(2027, 3, 31));
 
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
         Assert.Equal(5, check.WorkingDays);
         Assert.Equal(37.5m, check.Hours);
     }
 
     [Fact]
-    public void Holiday_needs_one_month_notice()
+    public void Needs_one_month_notice()
     {
-        var check = Check(Anna, AccountType.Weeks1To5, "2026-12-01", "2026-12-01");
+        // Arrange
+        var rules = RulesFor(Anna);
+        var request = Weeks1To5(new DateOnly(2026, 12, 1), new DateOnly(2026, 12, 1));
 
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
         var error = Assert.Single(check.Errors);
         Assert.Contains("1 month ahead", error);
         Assert.Contains("2026-12-18", error);
     }
 
     [Fact]
-    public void A_main_holiday_of_three_weeks_in_the_summer_is_fine()
+    public void Main_holiday_in_summer()
     {
-        var check = Check(Anna, AccountType.Weeks1To5, "2027-07-05", "2027-07-23");
+        // Arrange
+        var rules = RulesFor(Anna);
+        var request = Weeks1To5(new DateOnly(2027, 7, 5), new DateOnly(2027, 7, 23));
 
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
         Assert.True(check.IsValid);
         Assert.Equal(15, check.WorkingDays);
     }
 
     [Fact]
-    public void A_main_holiday_has_to_end_by_30_September()
+    public void Main_holiday_ends_by_30_Sep()
     {
-        var check = Check(Anna, AccountType.Weeks1To5, "2027-09-20", "2027-10-08");
+        // Arrange
+        var rules = RulesFor(Anna);
+        var request = Weeks1To5(new DateOnly(2027, 9, 20), new DateOnly(2027, 10, 8));
 
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
         var error = Assert.Single(check.Errors);
         Assert.Contains("over by 2027-09-30", error);
     }
 
     [Fact]
-    public void More_than_5_days_of_holiday_debt_is_not_allowed()
+    public void Max_5_days_debt()
     {
-        // about 30 hours earned, 74 hours requested
-        var check = Check(Dan, AccountType.Weeks1To5, "2027-01-11", "2027-01-22");
+        // Arrange: about 30 hours earned, 74 hours requested
+        var rules = RulesFor(Dan);
+        var request = Weeks1To5(new DateOnly(2027, 1, 11), new DateOnly(2027, 1, 22));
 
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
         var error = Assert.Single(check.Errors);
         Assert.Contains("borrow at most 5 days", error);
     }
 
     [Fact]
-    public void The_balance_must_not_be_negative_on_31_August()
+    public void No_debt_on_31_Aug()
     {
-        // within the debt limit every day, but still 9.61 hours short on 31 August
-        var check = Check(Dan, AccountType.Weeks1To5, "2027-08-02", "2027-08-31");
+        // Arrange: within the debt limit every day, but still 9.61 hours short on 31 August
+        var rules = RulesFor(Dan);
+        var request = Weeks1To5(new DateOnly(2027, 8, 2), new DateOnly(2027, 8, 31));
 
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
         var error = Assert.Single(check.Errors);
         Assert.Contains("-9.61 hours on 2027-08-31", error);
     }
 
     [Fact]
-    public void Week6_can_only_use_hours_that_are_already_usable()
+    public void Week6_usable_hours()
     {
-        // 4 months of 2025 = 12.32 hours, usable from 1 May 2026
-        var oneDay = Check(Anna, AccountType.Week6, "2027-01-11", "2027-01-11");
-        var twoDays = Check(Anna, AccountType.Week6, "2027-01-11", "2027-01-12");
+        // Arrange: 4 months of 2025 = 12.32 hours, usable from 1 May 2026. One day costs 7.5 hours.
+        var rules = RulesFor(Anna);
+        var request = new NewHolidayRequest(AccountType.Week6, new DateOnly(2027, 1, 11), new DateOnly(2027, 1, 11));
 
-        Assert.True(oneDay.IsValid);
-        Assert.Contains("12.32 hours of week 6", Assert.Single(twoDays.Errors));
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
+        Assert.True(check.IsValid);
     }
 
     [Fact]
-    public void Days_that_are_already_requested_cant_be_requested_again()
+    public void Week6_too_many_hours()
     {
+        // Arrange: two days cost 15 hours, but only 12.32 hours are usable
+        var rules = RulesFor(Anna);
+        var request = new NewHolidayRequest(AccountType.Week6, new DateOnly(2027, 1, 11), new DateOnly(2027, 1, 12));
+
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
+        var error = Assert.Single(check.Errors);
+        Assert.Contains("12.32 hours of week 6", error);
+    }
+
+    [Fact]
+    public void Overlapping_request()
+    {
+        // Arrange
         var pending = new HolidayRequest
         {
             EmployeeId = Anna.Id,
@@ -114,25 +171,43 @@ public class HolidayRequestRulesTests
             StartDate = new DateOnly(2027, 1, 11),
             EndDate = new DateOnly(2027, 1, 15)
         };
+        var rules = RulesFor(Anna, pending);
+        var request = Weeks1To5(new DateOnly(2027, 1, 14), new DateOnly(2027, 1, 20));
 
-        var check = Check(Anna, AccountType.Weeks1To5, "2027-01-14", "2027-01-20", [pending]);
+        // Act
+        var check = rules.Check(request);
 
+        // Assert
         Assert.Contains(check.Errors, e => e.Contains("already have a request"));
     }
 
     [Fact]
-    public void Holiday_before_the_first_day_is_not_allowed()
+    public void Before_first_day()
     {
-        var check = Check(Dan, AccountType.Weeks1To5, "2026-10-26", "2026-11-06");
+        // Arrange: Dan starts on 2 November 2026
+        var rules = RulesFor(Dan);
+        var request = Weeks1To5(new DateOnly(2026, 10, 26), new DateOnly(2026, 11, 6));
 
-        Assert.Contains("before your first day", Assert.Single(check.Errors));
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
+        var error = Assert.Single(check.Errors);
+        Assert.Contains("before your first day", error);
     }
 
     [Fact]
-    public void A_weekend_only_request_has_no_working_days()
+    public void Weekend_only()
     {
-        var check = Check(Anna, AccountType.Weeks1To5, "2027-01-16", "2027-01-17");
+        // Arrange: Saturday 16 and Sunday 17 January 2027
+        var rules = RulesFor(Anna);
+        var request = Weeks1To5(new DateOnly(2027, 1, 16), new DateOnly(2027, 1, 17));
 
-        Assert.Contains("no working days", Assert.Single(check.Errors));
+        // Act
+        var check = rules.Check(request);
+
+        // Assert
+        var error = Assert.Single(check.Errors);
+        Assert.Contains("no working days", error);
     }
 }

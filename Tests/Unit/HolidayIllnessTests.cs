@@ -27,7 +27,7 @@ public class HolidayIllnessTests
         new(request ?? Holiday, entries, Rules(Rule(RuleKeys.IllnessWaitingDays, "5")));
 
     [Fact]
-    public void Sick_days_after_the_5_waiting_days_are_given_back()
+    public void Days_after_5_are_returned()
     {
         var days = Illness(Usage()).DaysToGiveBack(new DateOnly(2027, 1, 11), new DateOnly(2027, 1, 22));
 
@@ -37,7 +37,7 @@ public class HolidayIllnessTests
     }
 
     [Fact]
-    public void Three_sick_days_are_all_waiting_days()
+    public void Three_days_are_waiting_days()
     {
         var errors = Illness(Usage()).Check(new DateOnly(2027, 1, 11), new DateOnly(2027, 1, 13));
 
@@ -45,7 +45,7 @@ public class HolidayIllnessTests
     }
 
     [Fact]
-    public void Days_already_given_back_are_not_given_back_again()
+    public void Not_returned_twice()
     {
         var entries = Usage();
         var illness = Illness(entries);
@@ -57,7 +57,7 @@ public class HolidayIllnessTests
     }
 
     [Fact]
-    public void Sick_days_must_be_within_the_holiday()
+    public void Must_be_within_holiday()
     {
         var errors = Illness(Usage()).Check(new DateOnly(2027, 1, 20), new DateOnly(2027, 1, 26));
 
@@ -65,7 +65,7 @@ public class HolidayIllnessTests
     }
 
     [Fact]
-    public void Illness_can_only_be_registered_on_approved_holiday()
+    public void Only_on_approved_holiday()
     {
         var pending = new HolidayRequest
         {

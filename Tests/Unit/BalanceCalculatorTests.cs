@@ -10,7 +10,7 @@ public class BalanceCalculatorTests
     private static readonly DateOnly Expires2027 = new(2027, 12, 31);
 
     [Fact]
-    public void Used_hours_come_from_the_holiday_that_expires_first()
+    public void Uses_oldest_hours_first()
     {
         var entries = new[]
         {
@@ -28,7 +28,7 @@ public class BalanceCalculatorTests
     }
 
     [Fact]
-    public void Hours_that_are_not_used_in_time_are_flagged_as_expired()
+    public void Unused_hours_expire()
     {
         var entries = new[] { Entry(10m, new DateOnly(2026, 8, 31), Expires2026) };
 
@@ -39,7 +39,7 @@ public class BalanceCalculatorTests
     }
 
     [Fact]
-    public void Week6_hours_can_only_be_used_from_1_May_the_year_after()
+    public void Week6_usable_from_1_May()
     {
         var entries = new[] { Entry(3.08m, new DateOnly(2026, 1, 31), new DateOnly(2028, 4, 30)) };
 
@@ -52,7 +52,7 @@ public class BalanceCalculatorTests
     }
 
     [Fact]
-    public void Using_more_than_the_balance_gives_holiday_debt()
+    public void Overuse_gives_debt()
     {
         var entries = new[]
         {
@@ -66,7 +66,7 @@ public class BalanceCalculatorTests
     }
 
     [Fact]
-    public void A_schedule_conversion_changes_every_unexpired_balance_by_the_same_factor()
+    public void Conversion_scales_balances()
     {
         var entries = new[]
         {
@@ -81,7 +81,7 @@ public class BalanceCalculatorTests
     }
 
     [Fact]
-    public void Entries_after_the_date_are_not_counted()
+    public void Ignores_later_entries()
     {
         var entries = new[]
         {

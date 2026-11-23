@@ -14,7 +14,7 @@ public class DanishPublicHolidaysTests
     }
 
     [Fact]
-    public void The_holidays_that_follow_Easter_move_with_it()
+    public void Holidays_follow_Easter()
     {
         var holidays = DanishPublicHolidays.In(2026);
 

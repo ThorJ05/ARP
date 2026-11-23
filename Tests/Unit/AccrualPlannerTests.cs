@@ -8,7 +8,7 @@ namespace BusinessEsbjerg.Holiday.Tests.Unit;
 public class AccrualPlannerTests
 {
     [Fact]
-    public void One_accrual_per_account_per_month_up_to_the_date()
+    public void One_accrual_per_month()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
         var accounts = Accounts(employee);
@@ -21,7 +21,7 @@ public class AccrualPlannerTests
     }
 
     [Fact]
-    public void A_month_is_earned_on_its_last_day()
+    public void Earned_on_last_day()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
 
@@ -31,7 +31,7 @@ public class AccrualPlannerTests
     }
 
     [Fact]
-    public void Running_it_again_adds_nothing()
+    public void Running_twice_adds_nothing()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
         var accounts = Accounts(employee);
@@ -44,7 +44,7 @@ public class AccrualPlannerTests
     }
 
     [Fact]
-    public void A_new_schedule_keeps_the_number_of_days()
+    public void Schedule_change_keeps_days()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
         employee.WorkSchedule.Add(PartTime(employee.Id, new DateOnly(2026, 7, 1)));
@@ -64,7 +64,7 @@ public class AccrualPlannerTests
     }
 
     [Fact]
-    public void Accrual_stops_at_the_end_date()
+    public void Stops_at_end_date()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1), terminated: new DateOnly(2026, 3, 15));
 
@@ -75,7 +75,7 @@ public class AccrualPlannerTests
     }
 
     [Fact]
-    public void Accruals_get_the_expiry_date_of_their_period()
+    public void Gets_period_expiry()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 8, 1));
         var accounts = Accounts(employee);
