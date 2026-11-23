@@ -44,19 +44,19 @@ public class TransferRulesTests
     }
 
     [Fact]
-    public void Nothing_can_be_transferred_when_transfers_are_switched_off()
+    public void Transfers_turned_off()
     {
         Assert.Contains("not allowed", Assert.Single(Check("2025-09-01", 7.4m, enabled: false)));
     }
 
     [Fact]
-    public void More_than_5_days_is_not_allowed()
+    public void Max_5_days()
     {
         Assert.Contains("at most 5 days", Assert.Single(Check("2025-09-01", 37.5m)));
     }
 
     [Fact]
-    public void The_5_days_are_for_the_whole_period_not_per_request()
+    public void Max_5_days_per_period()
     {
         var approved = Earlier("2025-09-01", 37m, RequestStatus.Approved);
 
@@ -66,7 +66,7 @@ public class TransferRulesTests
     }
 
     [Fact]
-    public void Another_date_in_the_same_period_is_still_a_duplicate()
+    public void Same_period_is_duplicate()
     {
         var pending = Earlier("2025-10-15", 7.4m, RequestStatus.Pending);
 
@@ -76,14 +76,14 @@ public class TransferRulesTests
     }
 
     [Fact]
-    public void Only_the_hours_left_in_the_period_can_be_transferred()
+    public void Only_hours_left()
     {
         // only September and October 2026 are earned in the period 2026/27
         Assert.Contains("only 30.78 hours left", Assert.Single(Check("2026-09-01", 37m)));
     }
 
     [Fact]
-    public void The_deadline_is_31_December_for_weeks_1_to_5()
+    public void Deadline_31_December()
     {
         var errors = Check("2025-09-01", 7.4m, today: new DateOnly(2027, 1, 5));
 

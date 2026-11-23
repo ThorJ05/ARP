@@ -20,14 +20,14 @@ public class RulePresetTests
     private static RulePreset Preset(string id) => RulePresets.Find(id)!;
 
     [Fact]
-    public void Every_preset_passes_the_checks_on_the_current_rules()
+    public void Presets_are_valid()
     {
         foreach (var preset in RulePresets.All)
             Assert.Empty(RulePresets.Check(preset, CurrentRules(), NextYear, Today));
     }
 
     [Fact]
-    public void The_minimum_preset_only_adds_the_values_that_change()
+    public void Adds_only_changes()
     {
         var values = RulePresets.ValuesToAdd(Preset("minimum"), CurrentRules(), NextYear);
 
@@ -37,19 +37,19 @@ public class RulePresetTests
     }
 
     [Fact]
-    public void A_preset_that_is_already_in_use_adds_nothing()
+    public void Preset_in_use_adds_nothing()
     {
         Assert.Empty(RulePresets.ValuesToAdd(Preset("kl-0511"), CurrentRules(), NextYear));
     }
 
     [Fact]
-    public void A_preset_from_today_or_earlier_is_rejected()
+    public void Past_date_rejected()
     {
         Assert.NotEmpty(RulePresets.Check(Preset("minimum"), CurrentRules(), Today, Today));
     }
 
     [Fact]
-    public void A_preset_is_rejected_if_one_of_its_rules_already_has_a_value_from_that_date()
+    public void Clashing_date_rejected()
     {
         var rules = CurrentRules();
         rules.Add(Rule(RuleKeys.Week6Enabled, "false", NextYear));
@@ -60,7 +60,7 @@ public class RulePresetTests
     }
 
     [Fact]
-    public void Unknown_preset_ids_are_not_found()
+    public void Unknown_preset_not_found()
     {
         Assert.Null(RulePresets.Find("does-not-exist"));
     }

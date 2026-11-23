@@ -11,7 +11,7 @@ public class HolidayRequestCancelTests
         new() { Status = status, StartDate = start, EndDate = start.AddDays(4) };
 
     [Fact]
-    public void A_pending_request_is_cancelled_right_away()
+    public void Pending_is_cancelled()
     {
         var request = Request(RequestStatus.Pending, new DateOnly(2027, 1, 11));
 
@@ -20,28 +20,42 @@ public class HolidayRequestCancelTests
     }
 
     [Fact]
-    public void Approved_holiday_that_hasnt_started_needs_the_accountant()
+    public void Approved_needs_accountant()
     {
         var request = Request(RequestStatus.Approved, new DateOnly(2027, 1, 11));
 
-        Assert.Null(request.Cancel(Today));
+        var error = request.Cancel(Today);
+
+        Assert.Null(error);
         Assert.Equal(RequestStatus.CancellationRequested, request.Status);
     }
 
     [Fact]
-    public void Holiday_that_has_started_cant_be_cancelled()
+    public void Started_cant_be_cancelled()
     {
+        //Arrange 
         var request = Request(RequestStatus.Approved, new DateOnly(2026, 11, 16));
 
-        Assert.NotNull(request.Cancel(Today));
+        //act   
+        var error = request.Cancel(Today);
+        
+        //Assert 
+        Assert.NotNull(error);
         Assert.Equal(RequestStatus.Approved, request.Status);
     }
-
+    
     [Fact]
-    public void A_rejected_request_cant_be_cancelled()
+    public void Rejected_cant_be_cancelled()
     {
+        //a
         var request = Request(RequestStatus.Rejected, new DateOnly(2027, 1, 11));
-
-        Assert.NotNull(request.Cancel(Today));
+        
+        //a
+        var error = request.Cancel(Today);
+        
+        //a
+        Assert.NotNull(error);
+        
+        Assert.Equal(RequestStatus.Rejected, request.Status);
     }
 }

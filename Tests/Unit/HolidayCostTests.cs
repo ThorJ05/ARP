@@ -12,7 +12,7 @@ public class HolidayCostTests
         HolidayDays.Between(employee, start, end, daysOff ?? []).Sum(d => d.Hours);
 
     [Fact]
-    public void A_short_Friday_costs_less_than_a_long_Tuesday()
+    public void Short_day_costs_less()
     {
         var friday = new DateOnly(2026, 11, 20);
         var tuesday = new DateOnly(2026, 11, 17);
@@ -23,7 +23,7 @@ public class HolidayCostTests
     
 
     [Fact]
-    public void A_whole_week_costs_37_hours_and_weekends_are_free()
+    public void Week_costs_37_hours()
     {
         // Monday 16 to Sunday 22 November 2026
         Assert.Equal(37m, Cost(_employee, new DateOnly(2026, 11, 16), new DateOnly(2026, 11, 22)));
@@ -41,7 +41,7 @@ public class HolidayCostTests
     
 
     [Fact]
-    public void The_cost_follows_the_schedule_used_on_each_day()
+    public void Cost_follows_schedule()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
         employee.WorkSchedule.Add(PartTime(employee.Id, new DateOnly(2026, 11, 19)));

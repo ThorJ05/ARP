@@ -12,7 +12,7 @@ public class RuleChangeTests
     private static List<RuleParameter> Existing(string key, string value) => [Rule(key, value)];
 
     [Fact]
-    public void A_valid_future_value_is_accepted()
+    public void Valid_value_accepted()
     {
         var errors = RuleChange.Check(Existing(RuleKeys.Weeks1To5DaysPerMonth, "2.08"), "2.16", NextYear, Today);
 
@@ -23,7 +23,7 @@ public class RuleChangeTests
     [InlineData("abc")]
     [InlineData("2,16")]
     [InlineData("-1")]
-    public void A_number_rule_only_accepts_numbers_of_0_or_more(string value)
+    public void Number_rule_needs_0_or_more(string value)
     {
         var errors = RuleChange.Check(Existing(RuleKeys.Weeks1To5DaysPerMonth, "2.08"), value, NextYear, Today);
 
@@ -33,7 +33,7 @@ public class RuleChangeTests
     [Theory]
     [InlineData("ja")]
     [InlineData("1")]
-    public void A_true_false_rule_only_accepts_true_or_false(string value)
+    public void Bool_rule_needs_true_false(string value)
     {
         var errors = RuleChange.Check(Existing(RuleKeys.Week6Enabled, "true"), value, NextYear, Today);
 
@@ -44,7 +44,7 @@ public class RuleChangeTests
     [InlineData("31-12")]
     [InlineData("12/31")]
     [InlineData("02-29")]
-    public void A_date_rule_only_accepts_a_real_MM_dd_date(string value)
+    public void Date_rule_needs_MM_dd(string value)
     {
         var errors = RuleChange.Check(Existing(RuleKeys.TransferDeadlineWeek5, "12-31"), value, NextYear, Today);
 
@@ -52,7 +52,7 @@ public class RuleChangeTests
     }
 
     [Fact]
-    public void Today_or_earlier_is_rejected_so_the_past_is_never_changed()
+    public void Past_date_rejected()
     {
         var existing = Existing(RuleKeys.Weeks1To5DaysPerMonth, "2.08");
 
@@ -61,7 +61,7 @@ public class RuleChangeTests
     }
 
     [Fact]
-    public void Two_values_from_the_same_date_are_rejected()
+    public void Duplicate_date_rejected()
     {
         List<RuleParameter> existing =
         [
@@ -75,7 +75,7 @@ public class RuleChangeTests
     }
 
     [Fact]
-    public void An_empty_value_is_rejected()
+    public void Empty_value_rejected()
     {
         var errors = RuleChange.Check(Existing(RuleKeys.TransferMaxDays, "5"), " ", NextYear, Today);
 

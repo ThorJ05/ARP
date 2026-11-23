@@ -7,7 +7,7 @@ namespace BusinessEsbjerg.Holiday.Tests.Unit;
 public class AccrualCalculatorTests
 {
     [Fact]
-    public void Full_time_whole_month_earns_2_08_days_and_3_083_week6_hours()
+    public void Full_time_month()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
 
@@ -20,7 +20,7 @@ public class AccrualCalculatorTests
     }
 
     [Fact]
-    public void Part_time_earns_the_same_days_but_week6_in_proportion()
+    public void Part_time_month()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
         employee.WorkSchedule = [PartTime(employee.Id, employee.HireDate)];
@@ -33,7 +33,7 @@ public class AccrualCalculatorTests
     }
 
     [Fact]
-    public void Start_in_the_middle_of_the_month_earns_for_the_days_employed()
+    public void Starts_mid_month()
     { 
         var employee = FullTimeEmployee(new DateOnly(2026, 4, 16)); // 15 of 30 days
 
@@ -45,7 +45,7 @@ public class AccrualCalculatorTests
     }
 
     [Fact]
-    public void End_in_the_middle_of_the_month_is_earned_on_the_last_day()
+    public void Ends_mid_month()
     {
         var employee = FullTimeEmployee(new DateOnly(2025, 1, 1), terminated: new DateOnly(2026, 6, 10));
         
@@ -59,7 +59,7 @@ public class AccrualCalculatorTests
     }
 
     [Fact]
-    public void Nothing_is_earned_outside_the_employment()
+    public void Nothing_outside_employment()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 5, 1), terminated: new DateOnly(2026, 8, 31));
 
@@ -68,7 +68,7 @@ public class AccrualCalculatorTests
     }
 
     [Fact]
-    public void A_rule_change_only_counts_from_its_start_date()
+    public void Rule_change_from_start_date()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
         
@@ -94,7 +94,7 @@ public class AccrualCalculatorTests
     }
 
     [Fact]
-    public void A_new_schedule_in_the_middle_of_the_month_counts_from_its_first_day()
+    public void Schedule_change_mid_month()
     {
         var employee = FullTimeEmployee(new DateOnly(2026, 1, 1));
         employee.WorkSchedule.Add(PartTime(employee.Id, new DateOnly(2026, 6, 16)));
