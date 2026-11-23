@@ -18,4 +18,19 @@ public class CompanyDayOffRepository(AppDbContext context) : ICompanyDayOffRepos
             .OrderBy(d => d.Date)
             .ToListAsync(ct);
     }
+    // a new company day off, e.g. 24 december
+    public async Task AddAsync(CompanyDayOff companyDayOff, CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        await db.InsertAsync( companyDayOff, token: ct);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        await using var db = context.CreateLinqToDBConnection();
+        var deleted = await db.GetTable<CompanyDayOff>()
+            .Where(d => d.Id == id)
+            .DeleteAsync(ct);
+        return deleted > 0;
+    }
 }

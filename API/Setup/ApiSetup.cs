@@ -6,6 +6,7 @@ using BusinessEsbjerg.Holiday.Service.Employees;
 using BusinessEsbjerg.Holiday.Service.Overview;
 using BusinessEsbjerg.Holiday.Service.Reports;
 using BusinessEsbjerg.Holiday.Service.Requests;
+using BusinessEsbjerg.Holiday.Service.Rules;
 using BusinessEsbjerg.Holiday.Service.Schedules;
 using BusinessEsbjerg.Holiday.Service.Users;
 using NSwag;
@@ -32,6 +33,8 @@ public static class ApiSetup
         services.AddScoped<ReportService>();
         services.AddScoped<OverviewService>();
         services.AddScoped<IllnessService>();
+        services.AddScoped<RuleService>();
+        services.AddScoped<CompanyDaysOffService>();
         return services;
     }
 

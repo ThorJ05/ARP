@@ -266,6 +266,51 @@ export interface IllnessDto {
   lastSickDay?: string;
 }
 
+export interface RuleResponse {
+  key?: string;
+  description?: string | null;
+  values?: RuleValueResponse[];
+}
+
+export interface RuleValueResponse {
+  value?: string;
+  /** @format date */
+  effectiveFrom?: string;
+}
+
+export interface RuleChangeDto {
+  value?: string;
+  /** @format date */
+  effectiveFrom?: string;
+}
+
+export interface RulePresetResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  values?: Record<string, string>;
+}
+
+export interface ApplyPresetDto {
+  /** @format date */
+  effectiveFrom?: string;
+}
+
+export interface CalendarDayResponse {
+  /** @format guid */
+  id?: string | null;
+  /** @format date */
+  date?: string;
+  name?: string;
+  isPublicHoliday?: boolean;
+}
+
+export interface NewCompanyDayOffDto {
+  /** @format date */
+  date?: string;
+  name?: string;
+}
+
 export interface QueueItemResponse {
   /** @format guid */
   id?: string;
@@ -899,6 +944,142 @@ export class Api<
         secure: true,
         type: ContentType.Json,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags rules
+     * @name GetRules
+     * @request GET:/api/rules
+     * @secure
+     */
+    getRules: (params: RequestParams = {}) =>
+      this.request<RuleResponse[], any>({
+        path: `/api/rules`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags rules
+     * @name ChangeRule
+     * @request POST:/api/rules/{key}
+     * @secure
+     */
+    changeRule: (
+      key: string,
+      data: RuleChangeDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/rules/${key}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags rules
+     * @name GetRulePresets
+     * @request GET:/api/rules/presets
+     * @secure
+     */
+    getRulePresets: (params: RequestParams = {}) =>
+      this.request<RulePresetResponse[], any>({
+        path: `/api/rules/presets`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags rules
+     * @name ApplyRulePreset
+     * @request POST:/api/rules/presets/{id}
+     * @secure
+     */
+    applyRulePreset: (
+      id: string,
+      data: ApplyPresetDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/rules/presets/${id}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Days off
+     * @name GetDaysOff
+     * @request GET:/api/days-off
+     * @secure
+     */
+    getDaysOff: (
+      query: {
+        /** @format int32 */
+        year: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<CalendarDayResponse[], any>({
+        path: `/api/days-off`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Days off
+     * @name AddCompanyDayOff
+     * @request POST:/api/days-off
+     * @secure
+     */
+    addCompanyDayOff: (data: NewCompanyDayOffDto, params: RequestParams = {}) =>
+      this.request<void, HttpValidationProblemDetails | void>({
+        path: `/api/days-off`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Days off
+     * @name DeleteCompanyDayOff
+     * @request DELETE:/api/days-off/{id}
+     * @secure
+     */
+    deleteCompanyDayOff: (id: string, params: RequestParams = {}) =>
+      this.request<void, void>({
+        path: `/api/days-off/${id}`,
+        method: "DELETE",
+        secure: true,
         ...params,
       }),
 
