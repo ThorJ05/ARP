@@ -1,19 +1,19 @@
 using BusinessEsbjerg.Holiday.Domain.Entities;
-using BusinessEsbjerg.Holiday.Service.Abstractions;
 using BusinessEsbjerg.Holiday.Domain.Rules;
-// A CLASS TO RULE THEM ALL
+using BusinessEsbjerg.Holiday.Service.Abstractions;
+
 namespace BusinessEsbjerg.Holiday.Service.Rules;
 
 // One rule with all its values, newest first (the history).
 public record RuleHistory(string Key, string? Description, IReadOnlyList<RuleParameter> Values);
 
 // The system owner's rules. A change is always a new value with a start date, old values are kept.
+// The checks are in Domain (RuleChange, RulePresets), so they can be unit tested without a database.
 public class RuleService(IRuleRepository rules, IClock clock)
 {
     public async Task<IReadOnlyList<RuleHistory>> GetAllAsync(CancellationToken ct = default)
     {
         var all = await rules.GetAllAsync(ct);
-        var current = new RuleSet(all);
         return all
             .GroupBy(r => r.Key)
             .OrderBy(g => g.Key)
@@ -24,38 +24,31 @@ public class RuleService(IRuleRepository rules, IClock clock)
             .ToList();
     }
 
+    // Adds a new value from a start date. Missing if the rule doesn't exist, Invalid if a check fails.
     public async Task<ChangeResult> ChangeAsync(string key, string value, DateOnly effectiveFrom,
         CancellationToken ct = default)
     {
-        var exixting = (await rules.GetAllAsync(ct)).Where(r => r.Key == key).ToList();
-        if (exixting.Count == 0) return ChangeResult.Missing;
-        // Only future dates, so current and past holidays is never changed
-        if (effectiveFrom <= clock.Today)
-            return ChangeResult.Invalid("The start date must be after today, so current and past holiday isn't changed");
-        // The rule must not already have a value from that exact date.
-        if (exixting.Any(r => r.EffectiveFrom == effectiveFrom))
-            return ChangeResult.Invalid("This rule already has a value from that date.");
-        // The value must not be empty
-       if (string.IsNullOrWhiteSpace(value))
-        return ChangeResult.Invalid("You must write a value.");
+        var existing = (await rules.GetAllAsync(ct)).Where(r => r.Key == key).ToList();
+        if (existing.Count == 0) return ChangeResult.Missing;
 
+        var errors = RuleChange.Check(existing, value, effectiveFrom, clock.Today);
+        if (errors.Count > 0) return ChangeResult.Invalid(string.Join(" ", errors));
 
-
-        await rules.AddAsync(new RuleParameter()
+        await rules.AddAsync(new RuleParameter
         {
             Key = key,
             Value = value.Trim(),
             EffectiveFrom = effectiveFrom,
-            Description = exixting[0].Description
+            Description = existing[0].Description
         }, ct);
-        
+
         return ChangeResult.Ok;
     }
-    
+
     // The presets the system owner can choose from.
     public IReadOnlyList<RulePreset> GetPresets() => RulePresets.All;
 
-    // Adds every value in the preset from a start date, as new values (old values are kept).
+    // Adds the preset's values from a start date, as new values (old values are kept).
     // All checks run first, so either all values are added or none.
     public async Task<ChangeResult> ApplyPresetAsync(string presetId, DateOnly effectiveFrom,
         CancellationToken ct = default)
@@ -63,28 +56,19 @@ public class RuleService(IRuleRepository rules, IClock clock)
         var preset = RulePresets.Find(presetId);
         if (preset is null) return ChangeResult.Missing;
 
-        // Only future dates, the same rule as when one value is changed.
-        if (effectiveFrom <= clock.Today)
-            return ChangeResult.Invalid("The start date must be after today, so current and past holiday isn't changed.");
-
         var all = await rules.GetAllAsync(ct);
+        var errors = RulePresets.Check(preset, all, effectiveFrom, clock.Today);
+        if (errors.Count > 0) return ChangeResult.Invalid(string.Join(" ", errors));
 
-        // None of the preset's rules may already have a value from that date.
-        if (all.Any(r => preset.Values.ContainsKey(r.Key) && r.EffectiveFrom ==  effectiveFrom))
-            return ChangeResult.Invalid("One of the rules already has a value from that date.");
-        
-        var current = new RuleSet(all);
-        
-        foreach (var (key, value) in preset.Values)
+        // values that are already the same are skipped, so the history only shows real changes
+        foreach (var (key, value) in RulePresets.ValuesToAdd(preset, all, effectiveFrom))
         {
-            if (current.Get(key, effectiveFrom) == value) continue;
-            var description = all.FirstOrDefault(r => r.Key == key)?.Description;
             await rules.AddAsync(new RuleParameter
             {
                 Key = key,
-                Value = value.Trim(),
+                Value = value,
                 EffectiveFrom = effectiveFrom,
-                Description = description
+                Description = all.First(r => r.Key == key).Description
             }, ct);
         }
 

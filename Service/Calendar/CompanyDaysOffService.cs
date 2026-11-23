@@ -1,5 +1,6 @@
 using BusinessEsbjerg.Holiday.Domain.Calendar;
 using BusinessEsbjerg.Holiday.Domain.Entities;
+using BusinessEsbjerg.Holiday.Domain.Enums;
 using BusinessEsbjerg.Holiday.Service.Abstractions;
 
 namespace BusinessEsbjerg.Holiday.Service.Calendar;
@@ -8,8 +9,14 @@ namespace BusinessEsbjerg.Holiday.Service.Calendar;
 public record CalendarDay(Guid? Id, DateOnly Date, string Name, bool IsPublicHoliday);
 
 // The system owner's company days off (e.g. 24 December). Public holidays come from the law and are only shown.
-public class CompanyDaysOffService(ICompanyDayOffRepository companyDaysOff, IClock clock)
+// The checks are in Domain (CompanyDayOffRules), so they can be unit tested without a database.
+public class CompanyDaysOffService(
+    ICompanyDayOffRepository companyDaysOff, IHolidayRequestRepository holidays, IClock clock)
 {
+    // holiday whose hours are already worked out with the current days off
+    private static readonly RequestStatus[] ActiveHoliday =
+        [RequestStatus.Pending, RequestStatus.Approved, RequestStatus.CancellationRequested];
+
     // Public holidays and company days off in one year, sorted by date.
     public async Task<IReadOnlyList<CalendarDay>> GetYearAsync(int year, CancellationToken ct = default)
     {
@@ -26,22 +33,11 @@ public class CompanyDaysOffService(ICompanyDayOffRepository companyDaysOff, IClo
 
     public async Task<ChangeResult> AddAsync(DateOnly date, string name, CancellationToken ct = default)
     {
-        // Only future dates, so holiday that is already planned or taken isn't changed.
-        if (date <= clock.Today)
-            return ChangeResult.Invalid("The day must be after today.");
-
-        // The name must not be empty.
-        if (string.IsNullOrWhiteSpace(name))
-            return ChangeResult.Invalid("The name cannot be empty.");
-
-        // It must not already be a public holiday.
-        if (DanishPublicHolidays.In(date.Year).Contains(date))
-            return ChangeResult.Invalid("That day is already a public holiday.");
-
-        // There must not already be a company day off on that date.
         var sameDay = await companyDaysOff.GetBetweenAsync(date, date, ct);
-        if (sameDay.Count > 0)          
-            return ChangeResult.Invalid("There is already a company day off on that date.");
+        var active = await holidays.GetByStatusAsync(ActiveHoliday, ct);
+
+        var errors = CompanyDayOffRules.CheckAdd(date, name, clock.Today, sameDay, active);
+        if (errors.Count > 0) return ChangeResult.Invalid(string.Join(" ", errors));
 
         await companyDaysOff.AddAsync(new CompanyDayOff { Date = date, Name = name.Trim() }, ct);
         return ChangeResult.Ok;
@@ -49,10 +45,13 @@ public class CompanyDaysOffService(ICompanyDayOffRepository companyDaysOff, IClo
 
     public async Task<ChangeResult> DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        // Only future days can be removed, so past calculations stay the same.
+        // only future days can be found here, so past calculations stay the same
         var future = await companyDaysOff.GetBetweenAsync(clock.Today.AddDays(1), clock.Today.AddYears(10), ct);
-        if (future.All(d => d.Id != id))
-            return ChangeResult.Invalid("Only future company days off can be removed.");
+        var day = future.FirstOrDefault(d => d.Id == id);
+        var active = await holidays.GetByStatusAsync(ActiveHoliday, ct);
+
+        var errors = CompanyDayOffRules.CheckRemove(day, clock.Today, active);
+        if (errors.Count > 0) return ChangeResult.Invalid(string.Join(" ", errors));
 
         await companyDaysOff.DeleteAsync(id, ct);
         return ChangeResult.Ok;
