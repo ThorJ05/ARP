@@ -41,7 +41,8 @@ Commit the updated `src/api/api.ts` in the same pull request as the backend chan
 
 ## Tests
 
-Run all tests with `dotnet test ARP.slnx` (GitHub Actions runs the same command on every pull request).
+Run the tests with `dotnet test ARP.slnx`. GitHub Actions runs the same command on every pull request,
+but leaves out the E2E tests.
 
 - **Unit tests** (`Tests/Unit`): the holiday rules, which are plain code without a database:
   monthly accrual (full time, part time, start or end in the middle of a month, a new schedule in the
@@ -53,6 +54,15 @@ Run all tests with `dotnet test ARP.slnx` (GitHub Actions runs the same command 
   Decisions: who and when is recorded, declining needs a reason, approved holiday writes one ledger entry per
   working day, an approved cancellation gives back exactly the hours it used, and a transfer moves hours to
   the next period.
+- **Integration tests** (`Tests/Integration`): the real API in memory with a real PostgreSQL database in Docker
+  (Testcontainers). They cover login and JWT, who may call what, and a holiday request from sending to approval
+  and the new balance. Docker must be running.
+- **E2E tests** (`Tests/E2E`): Playwright clicks through the website in a real browser: login, and an employee
+  sends a request, the accountant declines it and the employee sees "Rejected". They need the whole system
+  running, so they are skipped unless `E2E=1` is set. To run them:
+  1. First time only: `pwsh Tests/bin/Debug/net10.0/playwright.ps1 install chromium`
+  2. `docker compose up -d`, then `dotnet run --project API`, and `bun dev` in another terminal
+  3. `$env:E2E = "1"; dotnet test Tests --filter "Category=E2E"`
 
 ## Security
 
