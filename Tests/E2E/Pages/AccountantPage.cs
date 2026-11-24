@@ -14,5 +14,6 @@ public class AccountantPage(IPage page)
     }
 
     // the green message after a decision, e.g. "Anna Fulltime: declined."
-    public ILocator DeclinedMessage => page.GetByText("declined");
+    // ": declined." so it doesn't also match a reason that starts with "Declined"
+    public ILocator DeclinedMessage => page.GetByText(": declined.");
 }

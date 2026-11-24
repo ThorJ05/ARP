@@ -2,6 +2,7 @@
 using System.Net.Http.Json;
 using BusinessEsbjerg.Holiday.Api.Endpoints;
 using Microsoft.AspNetCore.Http;
+using static BusinessEsbjerg.Holiday.Tests.TestDates;
 
 namespace BusinessEsbjerg.Holiday.Tests.Integration;
 
@@ -9,16 +10,6 @@ namespace BusinessEsbjerg.Holiday.Tests.Integration;
 public class HolidayRequestTests(ApiFactory api)
 {
     private const string Weeks1To5 = "Weeks1To5";
-
-    // The API uses the real date,
-    // so the test can't use fixed dates.
-    private static DateOnly MondayInWeeks(int weeks)
-    {
-        var date = DateOnly.FromDateTime(DateTime.Today).AddDays(7 * weeks);
-        while (date.DayOfWeek != DayOfWeek.Monday)
-            date = date.AddDays(1);
-        return date;
-    }
 
     private static async Task<decimal> Weeks1To5HoursOn(HttpClient employee, DateOnly date)
     {

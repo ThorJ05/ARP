@@ -15,8 +15,8 @@ public abstract class BrowserTest : IAsyncLifetime
     public async Task InitializeAsync()
     {
         _playwright = await Playwright.CreateAsync();
-        // Headless = false shows the browser while the test runs (nice for a demo)
-        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless =  true });
+        // set Headless to false to watch the browser while the test runs (nice for a demo)
+        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
         var context = await _browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = BaseUrl });
         Page = await context.NewPageAsync();
     }
