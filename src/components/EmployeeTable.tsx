@@ -1,4 +1,5 @@
 import type { EmployeeResponse } from "../api/api";
+import { formatDate } from "../utils/dates";
 
 interface Props {
   employees: EmployeeResponse[];
@@ -26,8 +27,8 @@ export function EmployeeTable({ employees, selectedId, onOpen }: Props) {
           <tr key={e.id} className={e.id === selectedId ? "current" : undefined}>
             <td>{e.name}</td>
             <td>{e.email}</td>
-            <td>{e.hireDate}</td>
-            <td>{e.terminationDate ?? ""}</td>
+            <td>{formatDate(e.hireDate)}</td>
+            <td>{formatDate(e.terminationDate)}</td>
             <td className="number">{e.currentWeeklyHours?.toFixed(2) ?? "-"}</td>
             <td className="number">{(e.weeks1To5Hours ?? 0).toFixed(2)}</td>
             <td className="number">{(e.week6Hours ?? 0).toFixed(2)}</td>

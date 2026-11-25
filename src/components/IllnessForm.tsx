@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { ApprovedHolidayResponse } from "../api/api";
 import { api } from "../api/client";
 import { errorMessage, isUnauthorized } from "../utils/errors";
+import { formatDate } from "../utils/dates";
 
 interface Props {
   onUnauthorized: () => void;
@@ -62,7 +63,7 @@ export function IllnessForm({ onUnauthorized }: Props) {
           </option>
           {holidays.map((h) => (
             <option key={h.id} value={h.id}>
-              {h.employeeName}: {h.startDate} to {h.endDate}
+              {h.employeeName}: {formatDate(h.startDate)} to {formatDate(h.endDate)}
             </option>
           ))}
         </select>

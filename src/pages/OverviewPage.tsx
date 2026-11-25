@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router";
 import { useAuth } from "../auth/AuthContext";
 import { MonthNav } from "../components/MonthNav";
 import { MyCalendar } from "../components/MyCalendar";
@@ -16,9 +15,6 @@ export function OverviewPage() {
   return (
     <section className="card wide">
       <h2>Holiday overview</h2>
-      <p>
-        <Link to="/employee">Back to my page</Link>
-      </p>
 
       <div className="month-nav-row" role="group" aria-label="Choose view">
         <button type="button" aria-pressed={tab === "mine"} className={tab === "mine" ? "active" : undefined} onClick={() => setTab("mine")}>

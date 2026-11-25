@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { BalanceResponse } from "../api/api";
-import { today } from "../utils/dates";
+import { formatDate, today } from "../utils/dates";
 import { errorMessage, isUnauthorized } from "../utils/errors";
 
 const accountLabels: Record<string, string> = {
@@ -40,7 +40,7 @@ export function BalancePanel({ load, onUnauthorized }: Props) {
       </label>
       {date && date !== today() && (
         <p className="muted">
-          The balance on {date}, with the holiday earned until then.{" "}
+          The balance on {formatDate(date)}, with the holiday earned until then.{" "}
           <button type="button" onClick={() => setDate("")}>
             Back to today
           </button>
@@ -106,8 +106,8 @@ function ExpiryTable({ balances }: { balances: BalanceResponse[] }) {
           {rows.map((r) => (
             <tr key={`${r.account}-${r.expiresOn}`}>
               <td>{accountLabel(r.account)}</td>
-              <td>{r.availableFrom}</td>
-              <td>{r.expiresOn}</td>
+              <td>{formatDate(r.availableFrom)}</td>
+              <td>{formatDate(r.expiresOn)}</td>
               <td className="number">{hours(r.hours)}</td>
               <td className="number">{hours(r.days)}</td>
             </tr>

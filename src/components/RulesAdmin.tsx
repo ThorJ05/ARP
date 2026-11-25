@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import { errorMessage, isUnauthorized } from "../utils/errors";
 import type { RulePresetResponse, RuleResponse } from "../api/api";
+import { formatDate } from "../utils/dates";
 
 interface Props {
     onUnauthorized: () => void;
@@ -44,7 +45,7 @@ export function RulesAdmin({ onUnauthorized }: Props) {
         try {
             await api.api.changeRule(key, { value, effectiveFrom});
 
-            setMessage(`${key} is ${value} from ${effectiveFrom}.`);
+            setMessage(`${key} is ${value} from ${formatDate(effectiveFrom)}.`);
             setValue("");
             setEffectiveFrom("");
             
@@ -61,7 +62,7 @@ export function RulesAdmin({ onUnauthorized }: Props) {
         setError(null);
         try {
             await api.api.applyRulePreset(presetId, { effectiveFrom: presetFrom });
-            setMessage(`The preset was applied from ${presetFrom}.`);
+            setMessage(`The preset was applied from ${formatDate(presetFrom)}.`);
             setPresetId("");
             setPresetFrom("");
             await load();
@@ -131,7 +132,7 @@ export function RulesAdmin({ onUnauthorized }: Props) {
                         <td>{r.description}</td>
                         <td>
                             {r.values?.map((v) => (
-                                <div key={v.effectiveFrom}>{v.value} from {v.effectiveFrom}</div>
+                                <div key={v.effectiveFrom}>{v.value} from {formatDate(v.effectiveFrom)}</div>
                             ))}
                         </td>
                     </tr>

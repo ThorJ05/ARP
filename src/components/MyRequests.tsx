@@ -1,5 +1,6 @@
 import type { MyRequestResponse } from "../api/api";
 import { accountLabel } from "./balance";
+import { formatDate } from "../utils/dates";
 
 const statusLabels: Record<string, string> = {
   Pending: "Waiting for approval",
@@ -33,13 +34,13 @@ export function MyRequests({ requests, onCancel }: Props) {
       <tbody>
         {requests.map((r) => (
           <tr key={r.id}>
-            <td>{r.startDate}</td>
-            <td>{r.endDate}</td>
+            <td>{formatDate(r.startDate)}</td>
+            <td>{formatDate(r.endDate)}</td>
             <td>{accountLabel(r.account)}</td>
             <td className="number">{(r.hours ?? 0).toFixed(2)}</td>
             <td>{statusLabels[r.status ?? ""] ?? r.status}</td>
             <td>
-              {r.decidedAtUtc && <span className="muted">{r.decidedAtUtc.slice(0, 10)} </span>}
+              {r.decidedAtUtc && <span className="muted">{formatDate(r.decidedAtUtc)} </span>}
               {r.decisionReason}
             </td>
             <td>
