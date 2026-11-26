@@ -14,15 +14,27 @@ export function OverviewPage() {
 
   return (
     <section className="card wide">
-      <h2>Holiday overview</h2>
+      <div className="overview-header">
+        <h2>Holiday overview</h2>
 
-      <div className="month-nav-row" role="group" aria-label="Choose view">
-        <button type="button" aria-pressed={tab === "mine"} className={tab === "mine" ? "active" : undefined} onClick={() => setTab("mine")}>
-          My calendar
-        </button>
-        <button type="button" aria-pressed={tab === "team"} className={tab === "team" ? "active" : undefined} onClick={() => setTab("team")}>
-          Team
-        </button>
+        <div className="tabs" role="group" aria-label="Choose view">
+          <button
+            type="button"
+            aria-pressed={tab === "mine"}
+            className={tab === "mine" ? "active" : undefined}
+            onClick={() => setTab("mine")}
+          >
+            My calendar
+          </button>
+          <button
+            type="button"
+            aria-pressed={tab === "team"}
+            className={tab === "team" ? "active" : undefined}
+            onClick={() => setTab("team")}
+          >
+            Team
+          </button>
+        </div>
       </div>
 
       <MonthNav year={year} month={month} onChange={(y, m) => setMonth({ year: y, month: m })} />

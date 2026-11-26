@@ -222,23 +222,13 @@ button:disabled {
   cursor: default;
 }
 
-/* outline buttons: log out, month navigation and view tabs */
-.user button,
-.month-nav button,
-.month-nav-row button {
+/* outline button: log out */
+.user button {
   background: transparent;
   color: var(--primary);
 }
 
-.user button:hover:not(:disabled),
-.month-nav button:hover:not(:disabled),
-.month-nav-row button:hover:not(:disabled) {
-  background: var(--primary);
-  color: #ffffff;
-}
-
-.month-nav button.active,
-.month-nav-row button.active {
+.user button:hover:not(:disabled) {
   background: var(--primary);
   color: #ffffff;
 }
@@ -296,17 +286,147 @@ tr.current td {
 }
 
 /* ---------- holiday overview ---------- */
-.month-nav {
-  margin: 1rem 0;
-}
-
-.month-nav-row {
+.overview-header {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: center;
   align-items: center;
-  margin: 0.4rem 0;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.overview-header h2 {
+  margin: 0;
+}
+
+/* "My calendar / Team": one connected toggle instead of two separate buttons */
+.tabs {
+  display: inline-flex;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.tabs button {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--primary);
+}
+
+.tabs button.active,
+.tabs button:hover:not(:disabled) {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.month-nav {
+  margin-bottom: 1.25rem;
+}
+
+.month-nav-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.month-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.month-title {
+  min-width: 9.5rem;
+  text-align: center;
+  font-size: 1.25rem;
+  color: var(--heading);
+}
+
+/* the small arrow buttons and Today are quieter than the main buttons */
+.month-switcher button {
+  padding: 0.2rem 0.7rem;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--heading);
+}
+
+.month-switcher .arrow {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.month-switcher button:hover:not(:disabled) {
+  background: var(--surface-alt);
+  border-color: var(--border);
+}
+
+.holiday-year {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+
+/* the months of the holiday year as plain text, the chosen one underlined */
+.month-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.month-strip button {
+  padding: 0.2rem 0.5rem;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.month-strip button:hover:not(:disabled) {
+  background: transparent;
+  color: var(--heading);
+}
+
+.month-strip button.active {
+  border-bottom-color: var(--primary);
+  color: var(--heading);
+}
+
+/* remaining holiday as two small boxes */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--primary);
+  border-radius: 4px;
+  background: var(--surface-alt);
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.stat-value {
+  color: var(--heading);
+  font-size: 1.4rem;
+  font-weight: 900;
 }
 
 .cal-grid {
@@ -316,21 +436,26 @@ tr.current td {
 }
 
 .cal-head {
+  padding-bottom: 0.25rem;
   font-weight: 700;
   text-align: center;
   color: var(--heading);
 }
 
 .cal-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   min-height: 4.5rem;
+  padding: 0.35rem;
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 0.25rem;
   background: var(--surface);
 }
 
 .cal-cell.off {
   background: var(--surface-alt);
+  color: var(--text-muted);
 }
 
 .cal-cell.empty {
@@ -338,25 +463,89 @@ tr.current td {
   background: transparent;
 }
 
-.cal-tag {
-  display: inline-block;
-  margin-top: 0.25rem;
-  padding: 0 0.45rem;
-  border-radius: 4px;
-  font-weight: 700;
+.cal-cell.today {
+  border: 2px solid var(--primary);
+}
+
+.cal-cell.today .cal-day {
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.cal-day {
+  font-weight: 600;
+}
+
+/* a day with holiday is coloured, so it stands out without reading the text */
+.cal-cell.away {
   color: #ffffff;
 }
 
-.cal-tag.Approved {
+.cal-cell.away.Approved {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.cal-cell.away.Pending {
+  background: var(--warning);
+  border-color: var(--warning);
+}
+
+.cal-cell.away.CancellationRequested {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.cal-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.cal-label small {
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.swatch.Approved {
   background: var(--accent);
 }
 
-.cal-tag.Pending {
+.swatch.Pending {
   background: var(--warning);
 }
 
-.cal-tag.CancellationRequested {
+.swatch.CancellationRequested {
   background: var(--danger);
+}
+
+.swatch.off {
+  background: var(--surface-alt);
 }
 
 .team-wrap {

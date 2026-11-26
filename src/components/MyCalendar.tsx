@@ -2,17 +2,18 @@ import { useEffect, useState } from "react";
 import type { BalanceResponse, MyCalendarResponse } from "../api/api";
 import { api } from "../api/client";
 import { daysInMonth, isoDate, isWeekend, weekdayIndex } from "../utils/calendar";
+import { today } from "../utils/dates";
 import { errorMessage, isUnauthorized } from "../utils/errors";
 import { accountLabel } from "./balance";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+// the short text shown in a calendar day
 const statusText: Record<string, string> = {
   Approved: "Holiday",
-  Pending: "Waiting for approval",
-  CancellationRequested: "Cancellation requested",
+  Pending: "Waiting",
+  CancellationRequested: "Cancelling",
 };
-const statusLetter: Record<string, string> = { Approved: "H", Pending: "?", CancellationRequested: "C" };
 
 interface Props {
   year: number;
@@ -55,6 +56,7 @@ export function MyCalendar({ year, month, onUnauthorized }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const todayDate = today();
   const off = new Set(calendar?.daysOff ?? []);
   const byDate = new Map((calendar?.days ?? []).map((d) => [d.date, d]));
   const cells: (number | null)[] = [
@@ -65,10 +67,15 @@ export function MyCalendar({ year, month, onUnauthorized }: Props) {
   return (
     <div>
       {balances && (
-        <p>
-          <strong>Remaining holiday: </strong>
-          {balances.map((b) => `${accountLabel(b.account)}: ${hours(b.hours)} h (${hours(b.days)} days)`).join(" · ")}
-        </p>
+        <div className="stats">
+          {balances.map((b) => (
+            <div key={b.account} className="stat">
+              <span className="stat-label">{accountLabel(b.account)} left</span>
+              <span className="stat-value">{hours(b.days)} days</span>
+              <span className="muted">{hours(b.hours)} hours</span>
+            </div>
+          ))}
+        </div>
       )}
       {error && (
         <p className="error" role="alert">
@@ -88,28 +95,45 @@ export function MyCalendar({ year, month, onUnauthorized }: Props) {
           const date = isoDate(year, month, day);
           const away = byDate.get(date);
           const nonWorking = isWeekend(year, month, day) || off.has(date);
+          const isToday = date === todayDate;
+
+          const classes = ["cal-cell"];
+          if (nonWorking) classes.push("off");
+          if (isToday) classes.push("today");
+          if (away) classes.push("away", away.status ?? "");
+
           return (
-            <div key={date} className={nonWorking ? "cal-cell off" : "cal-cell"} role="gridcell">
-              <span>{day}</span>
+            <div
+              key={date}
+              className={classes.join(" ")}
+              role="gridcell"
+              aria-current={isToday ? "date" : undefined}
+            >
+              <span className="cal-day">{day}</span>
               {away && (
-                <div>
-                  <span
-                    className={`cal-tag ${away.status}`}
-                    title={`${statusText[away.status ?? ""] ?? away.status}, ${accountLabel(away.account)}`}
-                  >
-                    {statusLetter[away.status ?? ""] ?? "H"}
-                  </span>
-                  <div className="muted">{accountLabel(away.account)}</div>
-                </div>
+                <span className="cal-label">
+                  {statusText[away.status ?? ""] ?? away.status}
+                  <small>{accountLabel(away.account)}</small>
+                </span>
               )}
             </div>
           );
         })}
       </div>
-      <p className="muted">
-        H = approved holiday, ? = waiting for approval, C = cancellation requested. Grey days are weekends, public
-        holidays or company days off.
-      </p>
+      <ul className="legend">
+        <li>
+          <span className="swatch Approved" /> Holiday
+        </li>
+        <li>
+          <span className="swatch Pending" /> Waiting for approval
+        </li>
+        <li>
+          <span className="swatch CancellationRequested" /> Cancellation requested
+        </li>
+        <li>
+          <span className="swatch off" /> Weekend, public holiday or company day off
+        </li>
+      </ul>
     </div>
   );
 }
