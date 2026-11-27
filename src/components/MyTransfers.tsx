@@ -1,5 +1,6 @@
 import type { MyTransferResponse } from "../api/api";
 import { accountLabel } from "./balance";
+import { formatDate } from "../utils/dates";
 
 const statusLabels: Record<string, string> = {
   Pending: "Waiting for approval",
@@ -25,7 +26,7 @@ export function MyTransfers({ transfers }: { transfers: MyTransferResponse[] }) 
         {transfers.map((t) => (
           <tr key={t.id}>
             <td>{accountLabel(t.account)}</td>
-            <td>{t.fromPeriodStart}</td>
+            <td>{formatDate(t.fromPeriodStart)}</td>
             <td className="number">{(t.hours ?? 0).toFixed(2)}</td>
             <td>{statusLabels[t.status ?? ""] ?? t.status}</td>
             <td>{t.decisionReason}</td>

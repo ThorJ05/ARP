@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { RequestCheckResponse } from "../api/api";
 import { api } from "../api/client";
 import { errorMessage, isUnauthorized } from "../utils/errors";
+import { formatDate } from "../utils/dates";
 
 interface Props {
   onSent: () => void;
@@ -37,7 +38,7 @@ export function HolidayRequestForm({ onSent, onUnauthorized }: Props) {
     setBusy(true);
     try {
       await api.api.createRequest({ account, startDate, endDate, comment });
-      setMessage(`Your request for ${startDate} to ${endDate} was sent to the accountant.`);
+      setMessage(`Your request for ${formatDate(startDate)} to ${formatDate(endDate)} was sent to the accountant.`);
       setStartDate("");
       setEndDate("");
       setComment("");

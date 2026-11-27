@@ -3,6 +3,7 @@ import type { TeamOverviewResponse } from "../api/api";
 import { api } from "../api/client";
 import { daysInMonth, isoDate, isWeekend, monthNames, weekdayIndex } from "../utils/calendar";
 import { errorMessage, isUnauthorized } from "../utils/errors";
+import { formatDate } from "../utils/dates";
 
 const letters = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -81,7 +82,7 @@ export function TeamGrid({ year, month, onUnauthorized }: Props) {
                     <td
                       key={d}
                       className={isAway ? "away" : nonWorking ? "off" : undefined}
-                      title={isAway ? `${r.name}: holiday ${date}` : undefined}
+                      title={isAway ? `${r.name}: holiday ${formatDate(date)}` : undefined}
                     >
                       {isAway ? "H" : ""}
                     </td>

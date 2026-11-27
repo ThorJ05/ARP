@@ -1,4 +1,5 @@
 import type { ScheduleResponse, WorkWeekDto } from "../api/api";
+import { formatDate } from "../utils/dates";
 
 export const days = ["monday", "tuesday", "wednesday", "thursday", "friday"] as const;
 export type Day = (typeof days)[number];
@@ -59,9 +60,19 @@ export function ScheduleFields({ times, onChange }: { times: DayTimes; onChange:
       {days.map((d) => (
         <div className="day" key={d}>
           <span>{dayName(d)}</span>
-          <input type="time" value={times[d].start} onChange={(e) => set(d, "start", e.target.value)} />
+          <input
+            type="time"
+            aria-label={`${dayName(d)} start`}
+            value={times[d].start}
+            onChange={(e) => set(d, "start", e.target.value)}
+          />
           <span>-</span>
-          <input type="time" value={times[d].end} onChange={(e) => set(d, "end", e.target.value)} />
+          <input
+            type="time"
+            aria-label={`${dayName(d)} end`}
+            value={times[d].end}
+            onChange={(e) => set(d, "end", e.target.value)}
+          />
         </div>
       ))}
       <p className="muted">{weeklyHours(times).toFixed(2)} hours a week</p>
@@ -88,8 +99,8 @@ export function ScheduleTable({ schedules }: { schedules: ScheduleResponse[] }) 
       <tbody>
         {[...schedules].reverse().map((s) => (
           <tr key={s.id} className={s.validTo ? undefined : "current"}>
-            <td>{s.validFrom}</td>
-            <td>{s.validTo ?? "now"}</td>
+            <td>{formatDate(s.validFrom)}</td>
+            <td>{s.validTo ? formatDate(s.validTo) : "now"}</td>
             {days.map((d) => {
               const start = shortTime(s.week?.[`${d}Start`]);
               const end = shortTime(s.week?.[`${d}End`]);

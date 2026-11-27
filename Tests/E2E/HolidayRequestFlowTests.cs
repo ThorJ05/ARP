@@ -29,7 +29,8 @@ public class HolidayRequestFlowTests : BrowserTest
         await login.LogInAs(TestUsers.Anna, TestUsers.Password);
         await employee.SendHolidayRequest(start, end, stamp);
         await Assertions.Expect(employee.SentMessage).ToBeVisibleAsync();
-        await Assertions.Expect(employee.RequestRows(start.ToString("yyyy-MM-dd"))
+        // the tables show dates as dd-MM-yyyy (formatDate in src/utils/dates.ts)
+        await Assertions.Expect(employee.RequestRows(start.ToString("dd-MM-yyyy"))
             .Filter(new() { HasText = "Waiting for approval" })).ToHaveCountAsync(1);
         await login.LogOutButton.ClickAsync();
 

@@ -34,21 +34,24 @@ export function MonthNav({ year, month, onChange }: Props) {
 
   return (
     <nav className="month-nav" aria-label="Choose month">
-      <div className="month-nav-row">
-        <button type="button" onClick={() => go(-1)}>
-          Previous
-        </button>
-        <strong>
-          {monthNames[month - 1]} {year}
-        </strong>
-        <button type="button" onClick={() => go(1)}>
-          Next
-        </button>
-        <button type="button" onClick={() => onChange(now.year, now.month)}>
-          Today
-        </button>
-        <label>
-          Holiday year{" "}
+      <div className="month-nav-top">
+        <div className="month-switcher">
+          <button type="button" className="arrow" aria-label="Previous month" onClick={() => go(-1)}>
+            ‹
+          </button>
+          <strong className="month-title">
+            {monthNames[month - 1]} {year}
+          </strong>
+          <button type="button" className="arrow" aria-label="Next month" onClick={() => go(1)}>
+            ›
+          </button>
+          <button type="button" className="today-button" onClick={() => onChange(now.year, now.month)}>
+            Today
+          </button>
+        </div>
+
+        <label className="holiday-year">
+          Holiday year
           <select value={holidayYear} onChange={(e) => onChange(Number(e.target.value), HOLIDAY_YEAR_START_MONTH)}>
             {years.map((y) => (
               <option key={y} value={y}>
@@ -58,7 +61,8 @@ export function MonthNav({ year, month, onChange }: Props) {
           </select>
         </label>
       </div>
-      <div className="month-nav-row">
+
+      <div className="month-strip">
         {months.map((m) => {
           const active = m.year === year && m.month === month;
           return (

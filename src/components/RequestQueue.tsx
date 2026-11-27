@@ -3,6 +3,7 @@ import type { QueueItemResponse } from "../api/api";
 import { api } from "../api/client";
 import { errorMessage, isUnauthorized } from "../utils/errors";
 import { accountLabel } from "./balance";
+import { formatDate } from "../utils/dates";
 
 const kindLabels: Record<string, string> = {
   Holiday: "Holiday",
@@ -93,10 +94,10 @@ export function RequestQueue({ onUnauthorized }: Props) {
                   {kindLabels[item.kind ?? ""] ?? item.kind} ({accountLabel(item.account)})
                 </td>
                 <td>
-                  {item.kind === "Transfer" ? `Period from ${item.startDate}` : `${item.startDate} to ${item.endDate}`}
+                  {item.kind === "Transfer" ? `Period from ${formatDate(item.startDate)}` : `${formatDate(item.startDate)} to ${formatDate(item.endDate)}`}
                 </td>
                 <td className="number">{hours(item.hours)}</td>
-                <td className="number" title={`On ${item.balanceDate}`}>
+                <td className="number" title={`On ${formatDate(item.balanceDate)}`}>
                   {hours(item.balanceHours)}
                 </td>
                 <td className={(item.balanceAfterHours ?? 0) < 0 ? "number error" : "number"}>
@@ -108,6 +109,7 @@ export function RequestQueue({ onUnauthorized }: Props) {
                     value={reasons[item.id!] ?? ""}
                     maxLength={1000}
                     placeholder="Needed to decline"
+                    aria-label={`Reason for declining ${item.employeeName}'s request`}
                     onChange={(e) => setReasons({ ...reasons, [item.id!]: e.target.value })}
                   />
                 </td>

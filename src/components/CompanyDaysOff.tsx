@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { CalendarDayResponse } from "../api/api";
 import { api } from "../api/client";
 import { errorMessage, isUnauthorized } from "../utils/errors";
+import { formatDate } from "../utils/dates";
 
 interface Props {
     onUnauthorized: () => void;
@@ -40,7 +41,7 @@ export function CompanyDaysOff({ onUnauthorized }: Props) {
         setError(null);
         try {
             await api.api.addCompanyDayOff({ date, name });
-            setMessage(`${name} on ${date} was added.`);
+            setMessage(`${name} on ${formatDate(date)} was added.`);
             setDate("");
             setName("");
             await load();
@@ -79,7 +80,7 @@ export function CompanyDaysOff({ onUnauthorized }: Props) {
                     <tbody>
                     {days.map((d) => (
                         <tr key={d.date}>
-                            <td>{d.date}</td>
+                            <td>{formatDate(d.date)}</td>
                             <td>{d.name}</td>
                             <td>
                                 {/* only company days off can be removed, public holidays come from the law */}

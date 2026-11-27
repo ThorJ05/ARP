@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { HolidayReportRow } from "../api/api";
 import { api } from "../api/client";
 import { errorMessage, isUnauthorized } from "../utils/errors";
+import { formatDate } from "../utils/dates";
 
 interface Props {
   onUnauthorized: () => void;
@@ -46,7 +47,7 @@ export function HolidayReport({ onUnauthorized }: Props) {
         {rows.map((r) => (
           <tr key={`${r.name}-${r.terminationDate}`}>
             <td>{r.name}</td>
-            <td>{r.terminationDate ?? "-"}</td>
+            <td>{r.terminationDate ? formatDate(r.terminationDate) : "-"}</td>
             <td className="number">{show(r.expiredWeeks1To5)}</td>
             <td className="number">{show(r.expiredWeek6)}</td>
             <td className="number">{show(r.leftWeeks1To5)}</td>
